@@ -23,7 +23,7 @@
    
 	<!-- CRAWL METADATA: including identification of crawler/operator -->
 	<bean id="metadata" class="org.archive.modules.CrawlMetadata" autowire="byName">
-		<property name="operatorContactUrl" value="http://www.bl.uk/aboutus/legaldeposit/websites/websites/faqswebmaster/index.html"/>
+		<property name="operatorContactUrl" value="https://www.bl.uk/legal-deposit-web-archiving/"/>
 		<property name="jobName" value="#{systemEnvironment['CRAWL_NAME'] ?: 'frequent'}"/>
 		<property name="description" value="[see override above]"/>
 		<!-- <property name="operator" value=""/> -->
@@ -49,9 +49,9 @@
    
     <!-- a 'top-level' bean that listens for URLs from Kafka -->
     <bean id="kafkaUrlReceiver" class="uk.bl.wap.crawler.frontier.KafkaUrlReceiver">
-      <property name="bootstrapServers" value="#{systemEnvironment['KAFKA_BOOTSTRAP_SERVERS'] ?: 'kafka:9092'}" />
+      <property name="bootstrapServers" value="#{systemEnvironment['KAFKA_BOOTSTRAP_SERVERS'] ?: 'kafka:9094'}" />
       <property name="groupId" value="#{systemEnvironment['KAFKA_GROUP_ID'] ?: 'crawlers'}" />
-      <property name="topic" value="#{systemEnvironment['KAFKA_TOCRAWL_TOPIC'] ?: 'uris.tocrawl'}" />
+      <property name="topic" value="#{systemEnvironment['KAFKA_TOCRAWL_TOPIC'] ?: 'dc.tocrawl'}" />
       <property name="consumerId" value="#{systemEnvironment['KAFKA_CONSUMER_ID'] ?: 1}"/>
       <property name="consumerGroupSize" value="#{systemEnvironment['KAFKA_CONSUMER_GROUP_SIZE'] ?: 1}"/>
       <property name="seekToBeginning" value="#{systemEnvironment['KAFKA_SEEK_TO_BEGINNING'] ?: false}"/>
@@ -62,8 +62,8 @@
     </bean>
     <!-- This allows the collection of a separate crawl-log of the out-of-scope URIs. It is called from kafkaUrlReceiver -->
     <bean id="discardedUriFeed" class="uk.bl.wap.crawler.postprocessor.KafkaKeyedDiscardedFeed">
-        <property name="topic" value="#{systemEnvironment['KAFKA_DISCARDED_TOPIC'] ?: 'uris.discarded'}" />
-        <property name="brokerList" value="#{systemEnvironment['KAFKA_BOOTSTRAP_SERVERS'] ?: 'kafka:9092'}" />
+        <property name="topic" value="#{systemEnvironment['KAFKA_DISCARDED_TOPIC'] ?: 'dc.discarded'}" />
+        <property name="brokerList" value="#{systemEnvironment['KAFKA_BOOTSTRAP_SERVERS'] ?: 'kafka:9094'}" />
     </bean>
     
 	
@@ -259,7 +259,7 @@
     <bean id="inScopeUriFeed" class="uk.bl.wap.crawler.postprocessor.KafkaKeyedToCrawlFeed">
       <property name="enabled" value="#{systemEnvironment['KAFKA_INSCOPE_LOG_ENABLED'] ?: true}" />
       <property name="emitOutlinks" value="false" /> <!-- this module should at on the CrawlURI in the chain, not it's outlinks -->
-      <property name="topic" value="#{systemEnvironment['KAFKA_INSCOPE_TOPIC'] ?: 'uris.inscope'}" />
+      <property name="topic" value="#{systemEnvironment['KAFKA_INSCOPE_TOPIC'] ?: 'dc.inscope'}" />
       <property name="brokerList" value="#{systemEnvironment['KAFKA_BOOTSTRAP_SERVERS'] ?: 'kafka:9092'}" />
       <property name="extraFields">
          <map>
@@ -610,7 +610,7 @@
     <!-- This provides a crawl log feed to a queue - note that you'll need to set up a binding that matches these parameters to a queue -->
     <bean id="crawlLogFeed" class="uk.bl.wap.crawler.postprocessor.KafkaKeyedCrawlLogFeed">
       <property name="enabled" value="#{systemEnvironment['KAFKA_CRAWL_LOG_ENABLED'] ?: true}" />
-      <property name="topic" value="#{systemEnvironment['KAFKA_CRAWLED_TOPIC'] ?: 'uris.crawled'}" />
+      <property name="topic" value="#{systemEnvironment['KAFKA_CRAWLED_TOPIC'] ?: 'dc.crawled'}" />
       <property name="brokerList" value="#{systemEnvironment['KAFKA_BOOTSTRAP_SERVERS'] ?: 'kafka:9092'}" />
       <property name="extraFields">
           <map>
@@ -664,7 +664,7 @@
      <bean id="toCrawlFeed" class="uk.bl.wap.crawler.postprocessor.KafkaKeyedToCrawlFeed">
        <property name="enabled" value="#{systemEnvironment['KAFKA_CANDIDATES_LOG_ENABLED'] ?: true}" />
        <property name="emitInScopeOnly" value="#{systemEnvironment['KAFKA_CANDIDATES_IN_SCOPE_ONLY'] ?: false}"/>
-       <property name="topic" value="#{systemEnvironment['KAFKA_CANDIDATES_TOPIC'] ?: 'uris.candidates'}" />
+       <property name="topic" value="#{systemEnvironment['KAFKA_CANDIDATES_TOPIC'] ?: 'dc.candidates'}" />
        <property name="brokerList" value="#{systemEnvironment['KAFKA_BOOTSTRAP_SERVERS'] ?: 'kafka:9092'}" />
        <property name="extraFields">
            <map>

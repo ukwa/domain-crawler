@@ -1,6 +1,6 @@
 #!/bin/sh
 ENVFILE=$1
-SLEEP=15
+SLEEP=30
 DEBUG=
 
 
@@ -32,3 +32,4 @@ wait
 sleep ${SLEEP}
 
 docker service ls
+ps -ef | grep -v grep | grep heritrix

@@ -1,0 +1,138 @@
+version: "3.2"
+
+services:
+
+  # UKWA Heritrix for NPLD
+  npld-dc-heritrix-worker:
+    image: ukwa/heritrix:2.9.3
+    hostname: "npld-dc-heritrix3-worker-{{.Task.Slot}}"
+    ports:
+      - 8443:8443 # https
+      - 8484:8484 # jmx
+      - 9118:9118 # metrics
+    env_file: heritrix-shared-settings.env
+    environment:
+      - "CRAWL_NAME=dc2023"
+      - "LAUNCH_AUTOMATICALLY=false"
+      - "KAFKA_SEEK_TO_BEGINNING=false"
+      - "KAFKA_TOCRAWL_TOPIC=dc.tocrawl"
+      - "KAFKA_CANDIDATES_TOPIC=dc.tocrawl"
+      - "KAFKA_CRAWLED_TOPIC=dc.crawled"
+      - "KAFKA_INSCOPE_TOPIC=dc.inscope"
+      - "KAFKA_BOOTSTRAP_SERVERS=kafka-1:9092"
+      #- "KAFKA_BOOTSTRAP_SERVERS=kafka-1:9092,kafka-2:9092"
+      - "WARC_PREFIX=BL-NPLD"
+      - "CDXSERVER_ENDPOINT=${CDXSERVER_ENDPOINT}"
+      - "MAX_OUTBACKCDX_CONNECTIONS=600"
+      - "SURTS_SOURCE_FILE=/shared/surts.txt"
+      - "SURTS_EXCLUDE_SOURCE_FILE=/shared/excluded-surts.txt"
+      - "WEBRENDER_ENABLED=false"
+      - "JAVA_OPTS=-Xms16g -Xmx96g -XX:+UseG1GC -XX:MaxGCPauseMillis=1000 -XX:+UseCompressedOops -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=8484 -Dcom.sun.management.jmxremote.rmi.port=8484 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Djava.rmi.server.hostname=192.168.45.12"
+      - "MAX_TOE_THREADS=600"
+      - "WARC_WRITER_POOL_SIZE=200" # Currently 60
+      - "RETIRE_QUEUES=true" # Avoid logging all the over-quota URLs
+      - "USER_AGENT_PREFIX=bl.uk_lddc_bot" # Use domain crawl user agent
+      - "GEOIP_GB_ENABLED=true" # Allow inclusion based on GeoIP lookup
+      - "URI_FORGETTING_ENABLED=false" # Domain crawl uriUniqFilter doesn't need to forget.
+      - "PAUSE_AT_START=true" # Launch into PAUSED state.
+      - "MAX_RETRIES=3" # The default of 10 is not suitable as the domain crawl has a lot of unresponsive URLs.
+      - "RECENTLY_SEEN_USE_LAUNCH_TIMESTAMP=false" # Block the launchTimestamp recrawl mechanism.
+      - "FRONTIER_JE_CLEANER_THREADS=4" #:Use more cleaner threads
+      - "FRONTIER_JE_EVICTOR_CORE_THREADS=4" # Up the evictor threads
+      - "FRONTIER_JE_EVICTOR_MAX_THREADS=16" # Also allow more evictor when needed
+      - "HERITRIX_OUT=/heritrix/output/heritrix_out.log"
+    volumes:
+      - "${STORAGE_PATH}/heritrix/output:/heritrix/output"
+      - "${STORAGE_PATH}/heritrix/state:/heritrix/state"
+      - "${STORAGE_PATH}/heritrix/scratch:/heritrix/scratch"
+      - "./shared:/shared" # Shared configuration - surts file held here.
+      #- "./heritrix/crawler-beans.cxml:/jobs/frequent/crawler-beans.cxml" # Tweak the beans for DC.
+      - "./heritrix/uriuniqfilter-bloom.xml:/jobs/frequent/uriuniqfilter.xml" # Use a Bloom filter for the domain crawl.
+      # Block some URLs that we shouldn't have done:
+      - "./jobs/frequent/excludes.xml:/jobs/frequent/excludes.xml"
+    deploy:
+      replicas: 1
+    stop_grace_period: 5m # Give the H3 instances some time to shut down neatly following SIGTERM
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 204800
+        hard: 204800
+    depends_on:
+      - clamd
+      - kafka
+      - cdxserver
+    networks:
+      - default
+      - kafka
+    dns: # Use public DNS:
+      - "8.8.8.8"
+      - "8.8.4.4"
+   # cap_add:
+   #   - SYS_PTRACE
+
+  # Clamd virus scanning Service
+  clamd:
+    #user: ${CURRENT_UID} # Can't work as writes to /var/log/clamav as root.
+    image: ukwa/clamd
+    deploy:
+      replicas: 16
+
+  # CDX service for storing crawl status:
+  cdxserver:
+    user: ${CURRENT_UID}
+    image: nlagovau/outbackcdx:0.10.0
+    # Add '-v' for verbose logs on submissions:
+    command: "java -jar outbackcdx.jar -d /cdx-data -p 8080 -b 0.0.0.0 -t 5000 -u"
+    ulimits:
+      nofile:
+        soft: 10240
+        hard: 10240
+    ports:
+      - target: 8080
+        published: 9090
+        protocol: tcp
+        mode: host
+    volumes:
+      - "${STORAGE_PATH}/cdx-data:/cdx-data"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1g"
+
+
+  # ----------------------------------------------
+  # Monitoring
+  # ----------------------------------------------
+
+  prometheus:
+    user: ${CURRENT_UID}
+    image: prom/prometheus
+    ports:
+      - 9191:9090
+    volumes:
+      - "${STORAGE_PATH}/heritrix/prometheus/config:/etc/prometheus"
+      - "${STORAGE_PATH}/heritrix/prometheus/data:/prometheus"
+    user: root
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=1000d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.external-url=http://${EXTERNAL_HOSTNAME}:9191/'
+      - '--web.enable-admin-api'
+      - '--web.enable-lifecycle'
+    networks:
+      - default
+      - kafka
+
+networks:
+  # Allow attachment of transient web-render containers, external monitoring:
+  default:
+    driver: overlay
+    attachable: true
+  kafka:
+    external:
+      name: dc_kafka_default
+

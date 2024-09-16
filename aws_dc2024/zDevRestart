@@ -1,0 +1,70 @@
+#!/bin/env bash
+#### DEVELOPMENT USE ONLY ####
+SLEEP=3
+DEBUG=
+
+# functions -----
+function get_args {
+	while [[ ${#@} -gt 0 ]]; do
+		if [[ $1 == '--debug' || $1 == '-d' ]]; then DEBUG=$1
+		elif [[ $1 == 'stop' ]]; then ACTION=$1
+		fi
+		shift
+	done
+	[[ ${DEBUG} ]] && echo 'Debug On'
+}
+
+function stop_stacks {
+	[[ ${DEBUG} ]] && echo 'stop_stacks'
+	for stack in $(docker stack ls | grep -oP "^\w+"); do
+		[[ ${stack} == 'NAME' ]] && continue
+		echo "Removing stack ${stack}"
+		docker stack rm ${stack}
+	done
+	sleep ${SLEEP}
+	echo
+}
+
+function wait_until_stopped {
+	[[ ${DEBUG} ]] && echo 'wait_until_stopped'
+	while true; do
+		docProc=$(docker ps | grep -v 'NAME')
+		[[ ${docProc} ]] || break
+		sleep ${SLEEP}
+		[[ ${DEBUG} ]] && echo -e "docker process running:\t ${docProc}"
+	done
+	sleep ${SLEEP}
+	docker ps -a
+	echo
+}
+
+function remove_kafka_dirs {
+	[[ ${DEBUG} ]] && echo 'remove_kafka_dirs'
+	rm /mnt/data/dc/kafka/* -rf && wait
+	tree /mnt/data/dc/
+}
+
+function start_prereqs {
+	[[ ${DEBUG} ]] && echo 'start_prereqs'
+	./dc1-deploy_aws_dc_prereq.sh aws_dc2024_crawler08-prod.env 
+}
+
+function create_topics {
+	[[ ${DEBUG} ]] && echo 'create_topics'
+	./dc2-create_kafka_topics.sh aws_dc2024_crawler08-prod.env 
+}
+
+# script --------
+get_args $@
+[[ ${DEBUG} ]] || clear
+
+echo "Ensuring stacks removed"
+stop_stacks
+wait_until_stopped
+remove_kafka_dirs
+
+if ! [[ ${ACTION} == 'stop' ]]; then
+	start_prereqs
+	sleep ${SLEEP}
+	create_topics
+fi

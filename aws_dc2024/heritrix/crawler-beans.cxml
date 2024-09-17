@@ -24,7 +24,7 @@
 	<!-- CRAWL METADATA: including identification of crawler/operator -->
 	<bean id="metadata" class="org.archive.modules.CrawlMetadata" autowire="byName">
 		<property name="operatorContactUrl" value="https://www.bl.uk/legal-deposit-web-archiving/"/>
-		<property name="jobName" value="#{systemEnvironment['CRAWL_NAME'] ?: 'frequent'}"/>
+		<property name="jobName" value="#{systemEnvironment['CRAWL_NAME'] ?: 'dc'}"/>
 		<property name="description" value="[see override above]"/>
 		<!-- <property name="operator" value=""/> -->
 		<!-- <property name="operatorFrom" value=""/> -->
@@ -263,7 +263,7 @@
       <property name="brokerList" value="#{systemEnvironment['KAFKA_BOOTSTRAP_SERVERS'] ?: 'kafka:9092'}" />
       <property name="extraFields">
          <map>
-            <entry key="CRAWL_NAME" value="#{systemEnvironment['CRAWL_NAME'] ?: 'frequent'}"/>
+            <entry key="CRAWL_NAME" value="#{systemEnvironment['CRAWL_NAME'] ?: 'dc'}"/>
          </map>
       </property>
       <property name="discardedUriFeedEnabled" value="#{systemEnvironment['KAFKA_DISCARDED_FEED_ENABLED'] ?: false}"/>
@@ -562,7 +562,7 @@
 		<property name="directory" value="." />
 		<property name="storePaths">
 			<list>
-				<value>/heritrix/output/#{systemEnvironment['CRAWL_NAME'] ?: 'frequent'}/${launchId}/viral/</value>
+				<value>/heritrix/output/#{systemEnvironment['CRAWL_NAME'] ?: 'dc'}/${launchId}/viral/</value>
 			</list>
 		</property>
 		<property name="writeRequests" value="true" />
@@ -599,7 +599,7 @@
 		<property name="directory" value="." />
 		<property name="storePaths">
 			<list>
-				<value>/heritrix/output/#{systemEnvironment['CRAWL_NAME'] ?: 'frequent'}/${launchId}/warcs/</value>
+				<value>/heritrix/output/#{systemEnvironment['CRAWL_NAME'] ?: 'dc'}/${launchId}/warcs/</value>
 			</list>
 		</property>
 		<property name="writeRequests" value="true" />
@@ -614,7 +614,7 @@
       <property name="brokerList" value="#{systemEnvironment['KAFKA_BOOTSTRAP_SERVERS'] ?: 'kafka:9092'}" />
       <property name="extraFields">
           <map>
-            <entry key="crawl_name" value="#{systemEnvironment['CRAWL_NAME'] ?: 'frequent'}"/>
+            <entry key="crawl_name" value="#{systemEnvironment['CRAWL_NAME'] ?: 'dc'}"/>
           </map>
       </property>
     </bean>
@@ -628,7 +628,7 @@
     <property name="amqpUri" value="amqp://guest:guest@#{systemEnvironment['AMQP_HOST'] ?: localhost}:5672/%2f" />
     <property name="extraFields">
         <map>
-          <entry key="crawl_name" value="#{systemEnvironment['CRAWL_NAME'] ?: 'frequent'}"/>
+          <entry key="crawl_name" value="#{systemEnvironment['CRAWL_NAME'] ?: 'dc'}"/>
         </map>
     </property>
     <property name="shouldProcessRule">
@@ -668,7 +668,7 @@
        <property name="brokerList" value="#{systemEnvironment['KAFKA_BOOTSTRAP_SERVERS'] ?: 'kafka:9092'}" />
        <property name="extraFields">
            <map>
-             <entry key="CRAWL_NAME" value="#{systemEnvironment['CRAWL_NAME'] ?: 'frequent'}"/>
+             <entry key="CRAWL_NAME" value="#{systemEnvironment['CRAWL_NAME'] ?: 'dc'}"/>
            </map>
        </property>
        <property name="discardedUriFeedEnabled" value="#{systemEnvironment['KAFKA_DISCARDED_FEED_ENABLED'] ?: false}"/>
@@ -722,7 +722,7 @@
 		<property name="recorderInBufferBytes" value="524288" />
 		<property name="recorderOutBufferBytes" value="16384" />
 		<!-- property name="checkpointerPeriod" value="-1" / -->
-		<property name="scratchDir" value="/heritrix/scratch/#{systemEnvironment['HOSTNAME'] ?: 'host'}-#{systemEnvironment['CRAWL_NAME'] ?: 'frequent'}/" />
+		<property name="scratchDir" value="/heritrix/scratch/#{systemEnvironment['HOSTNAME'] ?: 'host'}-#{systemEnvironment['CRAWL_NAME'] ?: 'dc'}/" />
 	</bean>
 	
 	<!-- FRONTIER: Record of all URIs discovered and queued-for-collection -->
@@ -790,7 +790,7 @@
 	<!-- CHECKPOINTSERVICE: checkpointing assistance -->
 	<bean id="checkpointService" class="org.archive.crawler.framework.CheckpointService">
 		<property name="checkpointIntervalMinutes" value="#{systemEnvironment['CHECKPOINT_INTERVAL_MINUTES'] ?: 1440}"/>
-		<property name="checkpointsDir" value="/heritrix/state/crawl-#{systemEnvironment['CRAWL_NAME'] ?: 'frequent'}.host-#{systemEnvironment['HOSTNAME'] ?: 'host'}/checkpoints"/>
+		<property name="checkpointsDir" value="/heritrix/state/crawl-#{systemEnvironment['CRAWL_NAME'] ?: 'dc'}.host-#{systemEnvironment['HOSTNAME'] ?: 'host'}/checkpoints"/>
         <!-- this controls whether we retain all checkpoints, or only the last one. Unfortunately, using is also keeps merging all the previous logs into a single massive log file: -->
         <property name="forgetAllButLatest" value="#{systemEnvironment['CHECKPOINT_FORGET_ALL_BUT_LATEST'] ?: false}"/>
 	</bean>
@@ -864,7 +864,7 @@
 	
 	<!-- CRAWLERLOGGERMODULE: shared logging facility -->
 	<bean id="loggerModule" class="org.archive.crawler.reporting.BufferedCrawlerLoggerModule">
-		<property name="path" value="/heritrix/output/#{systemEnvironment['CRAWL_NAME'] ?: 'frequent'}/${launchId}/logs/" />
+		<property name="path" value="/heritrix/output/#{systemEnvironment['CRAWL_NAME'] ?: 'dc'}/${launchId}/logs/" />
 		<property name="crawlLogPath" value="crawl.log" />
 		<property name="alertsLogPath" value="alerts.log" /> 
 		<property name="progressLogPath" value="progress-statistics.log" />
@@ -884,22 +884,22 @@
     <!-- By default, the cache is shared across all databases, and the cachePercent specifies the global percentage of heap to use.
          Therefore, the same value should be used for all modules to that it definately gets set to the right value. -->
   <bean id="bdbFrontierBdb" class="org.archive.bdb.BdbModule">
-    <property name="dir" value="/heritrix/state/crawl-#{systemEnvironment['CRAWL_NAME'] ?: 'frequent'}.host-#{systemEnvironment['HOSTNAME'] ?: 'host'}/frontier"/>
+    <property name="dir" value="/heritrix/state/crawl-#{systemEnvironment['CRAWL_NAME'] ?: 'dc'}.host-#{systemEnvironment['HOSTNAME'] ?: 'host'}/frontier"/>
     <property name="cachePercent" value="10"/>
     <property name="expectedConcurrency" value="100"/>
   </bean>
   <bean id="bdbStatisticsBdb" class="org.archive.bdb.BdbModule">
-    <property name="dir" value="/heritrix/state/crawl-#{systemEnvironment['CRAWL_NAME'] ?: 'frequent'}.host-#{systemEnvironment['HOSTNAME'] ?: 'host'}/statistics"/>
+    <property name="dir" value="/heritrix/state/crawl-#{systemEnvironment['CRAWL_NAME'] ?: 'dc'}.host-#{systemEnvironment['HOSTNAME'] ?: 'host'}/statistics"/>
     <property name="cachePercent" value="10"/>
     <property name="expectedConcurrency" value="100"/>
   </bean>
   <bean id="bdbCookieStoreBdb" class="org.archive.bdb.BdbModule">
-    <property name="dir" value="/heritrix/state/crawl-#{systemEnvironment['CRAWL_NAME'] ?: 'frequent'}.host-#{systemEnvironment['HOSTNAME'] ?: 'host'}/cookies"/>
+    <property name="dir" value="/heritrix/state/crawl-#{systemEnvironment['CRAWL_NAME'] ?: 'dc'}.host-#{systemEnvironment['HOSTNAME'] ?: 'host'}/cookies"/>
     <property name="cachePercent" value="10"/>
     <property name="expectedConcurrency" value="100"/>
   </bean>
   <bean id="bdbServerCacheBdb" class="org.archive.bdb.BdbModule">
-    <property name="dir" value="/heritrix/state/crawl-#{systemEnvironment['CRAWL_NAME'] ?: 'frequent'}.host-#{systemEnvironment['HOSTNAME'] ?: 'host'}/serverCache"/>
+    <property name="dir" value="/heritrix/state/crawl-#{systemEnvironment['CRAWL_NAME'] ?: 'dc'}.host-#{systemEnvironment['HOSTNAME'] ?: 'host'}/serverCache"/>
     <property name="cachePercent" value="10"/>
     <property name="expectedConcurrency" value="100"/>
   </bean>

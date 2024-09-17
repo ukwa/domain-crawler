@@ -36,4 +36,4 @@ Viewing the Kafka UI now should show **dc_cluster** under the Dasboard, and with
 Once the pre-requisities have started, the heritrix crawler can be deployed. To do this, run:
 * `./dc3-deploy_aws_dc_crawler.sh aws_dc2024_crawler08-prod.env`
 
-
+Note that heritrix runs under a user account with ID 1001. This is because, within the heritrix container, heritrix runs under this account ID and requires to write a very small `dmesg` startup log into the `/h3-bin/` container directory. On the current deployment server, the 1001 account ID is used by the 'node_exporter' user, but the owner detail is not significant.

@@ -29,7 +29,7 @@ services:
   npld-dc-heritrix-worker:
     image: ${HERITRIX_IMAGE}
     hostname: "npld-dc-heritrix3-worker-{{.Task.Slot}}"
-    user: ${USER_ID}
+    user: ${HERITRIX_USER_ID}
     ulimits:
       nproc:
         soft: 204800
@@ -48,10 +48,10 @@ services:
       - ${HERITRIX_SCRATCH_PATH}:/heritrix/scratch
       - ${HERITRIX_LOG_PATH}:/heritrix/log
       - ${SURTS_NPLD_PATH}:/shared
-      #- "./heritrix/crawler-beans.cxml:/jobs/frequent/crawler-beans.cxml" # Tweak the beans for DC
-      - "./heritrix/uriuniqfilter-bloom.xml:/jobs/frequent/uriuniqfilter.xml"     # Use a Bloom filter for the domain crawl
+      # Use a Bloom filter for the domain crawl
+      - "./heritrix/uriuniqfilter-bloom.xml:/jobs/dc/uriuniqfilter.xml"
       # Block some URLs that we shouldn't have done:
-      - "./jobs/frequent/excludes.xml:/jobs/frequent/excludes.xml"
+      - "./jobs/dc/excludes.xml:/jobs/dc/excludes.xml"
     stop_grace_period: 10m     # Give the H3 instances some time to shut down neatly following SIGTERM
     depends_on:
       - clamd

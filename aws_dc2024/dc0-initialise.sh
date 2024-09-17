@@ -1,6 +1,9 @@
 #!/bin/sh
 ENVFILE=$1
 CLAMUSER=clamav
+CLAMID=100
+HERITRIXUSER=heritrix
+HERITRIXID=1001
 DEBUG=
 
 
@@ -43,15 +46,17 @@ function make_directory {
 	fi
 }
 
-function create_clamav_user {
-	# check no 100 id user exists
-	id100=$(id 100 2> /dev/null)
-	if [[ ${id100} ]]; then
-		echo -e "User with id 100 already created"
-		echo -e "ID:\t [${id100}]"
+function create_user {
+	local user=$1
+	local uid=$2
+	# check no id for user exists
+	local _id=$(id ${uid} 2> /dev/null)
+	if [[ ${_id} ]]; then
+		echo -e "User with id ${uid} already created"
+		echo -e "ID:\t [${_id}]"
 	else
-		sudo useradd --no-create-home --system --shell /sbin/nologin --uid 100 ${CLAMUSER}
-		echo "User '${CLAMUSER}' id 100 created"
+		sudo useradd --no-create-home --system --shell /sbin/nologin --uid ${uid} ${user}
+		echo "User '${user}' id ${uid} created"
 	fi
 }
 
@@ -96,8 +101,9 @@ done
 echo -e "\n${STORAGE_PATH} tree structure"
 tree -d ${STORAGE_PATH} | less --no-init --quit-if-one-screen
 
-create_clamav_user
+create_user ${CLAMUSER} ${CLAMID}
 clamav_dir
 prometheus_configs
 create_empty_surts
+create_user ${HERITRIXUSER} ${HERITRIXID}
 echo

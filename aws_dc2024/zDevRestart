@@ -38,9 +38,9 @@ function wait_until_stopped {
 	echo
 }
 
-function remove_kafka_dirs {
-	[[ ${DEBUG} ]] && echo 'remove_kafka_dirs'
-	rm /mnt/data/dc/kafka/* -rf && wait
+function remove_dirs {
+	[[ ${DEBUG} ]] && echo 'remove_dirs'
+	rm /mnt/data/dc/kafka/* /mnt/data/dc/prometheus/data/* -rf && wait
 	tree /mnt/data/dc/
 }
 
@@ -66,7 +66,7 @@ get_args $@
 echo "Ensuring stacks removed"
 stop_stacks
 wait_until_stopped
-remove_kafka_dirs
+remove_dirs
 
 if ! [[ ${ACTION} == 'stop' ]]; then
 	start_prereqs

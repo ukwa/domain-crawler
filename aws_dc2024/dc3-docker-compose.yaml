@@ -49,9 +49,9 @@ services:
       - ${HERITRIX_LOG_PATH}:/heritrix/log
       - ${SURTS_NPLD_PATH}:/shared
       # Use a Bloom filter for the domain crawl
-      - "./heritrix/uriuniqfilter-bloom.xml:/jobs/dc/uriuniqfilter.xml"
+      - "./heritrix/uriuniqfilter-bloom.xml:/jobs/frequent/uriuniqfilter.xml"
       # Block some URLs that we shouldn't have done:
-      - "./jobs/dc/excludes.xml:/jobs/dc/excludes.xml"
+      - "./jobs/dc/excludes.xml:/jobs/frequent/excludes.xml"
     stop_grace_period: 10m     # Give the H3 instances some time to shut down neatly following SIGTERM
     depends_on:
       - clamd

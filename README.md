@@ -4,7 +4,7 @@
 * IMPORTANT: Scripts starting with 'z' are for development purposes and must not be used on a production service as they destroy data.
 ####
 
-This repo contains the code required to operate the UKWA domain crawler. Each year's code is intended to be collected here - the current and only year captured currently is 2024, in the `aws_dc2024/` directory. The instructions below are expected to be run within the year directory.
+This repo contains the code required to operate the UKWA domain crawler. Each year's code is intended to be collected here - the current and only year captured currently is 2024, in the `aws_dc2024/` directory. The instructions below are expected to be run within the year directory - all command lines below will need to be amended to match the actual, corresponding files.
 
 
 Before running the deploy script:
@@ -15,8 +15,10 @@ Before running the deploy script:
 
 # Step 1: Initial server setup
 
-By running the `dc0` script with the new .env file, the required directories will be created, the `clamav` user will be created, and the monitoring configs will be copied to their deployed directory location. Note that the primary directory - `STORAGE_PATH` - has to exist for this script to complete. This attempts to ensure that if extra volumes need to be created and mounted beforehand, this extra setup step is done before running this `dc0` script. For example,
+By running the `dc0` script with the new .env file, a series of OS-level requirements are created or configured . Note that the primary directory - `STORAGE_PATH` - has to exist for this script to complete. This attempts to ensure that if extra volumes need to be created and mounted beforehand, this extra setup step is done before running this `dc0` script. For example,
 * `./dc0-initialise.sh aws_dc2024_crawler08-prod.env`
+
+Examining the `dc0` script will explain the performed actions.
 
 ## Crawler pre-requisities
 
@@ -25,10 +27,16 @@ There are several services that need to exist before the heritrix crawler is ins
 To deploy:
 * `./dc1-deploy_aws_dc_prereq.sh aws_dc2024_crawler08-prod.env`
 
+After `dc1` is run, the following services should be running:
+- kafka, accepting input on port 9094
+- kafka-ui, viewable at http://localhost:9000/, which should show the 'dc-cluster' Cluster exists. An active broker collector should exist under the Brokers dashboard
+- clamav, should have multiple instances running, all using the same location for the virus databases
+- prometheus, viewable at http://localhost:9191/graph The Status > Targets and Status > Service Discovery are especially useful to see the configured watchers and alerts
+
 The kafka service is one of these pre-requisities. If the kafka queues haven't previously been created, then once the pre-requisities have deployed, the kafka queues (known as topics in Kafka) need to be created, by:
 * `./dc2-create_kafka_topics.sh aws_dc2024_crawler08-prod.env`
 
-Viewing the Kafka UI now should show **dc_cluster** under the Dasboard, and within this dc_cluster, 3 topics should exist for the domain crawl: dc.tocrawl, dc.inscope, and dc.crawled. There should also be a validated (green ticked) broker showing the EC2 internal IP.
+Once `dc2` is run, the kafka queues should be listed under the Topics 'dc-cluster' dashboard
 
 
 ## Heritrix deployment
@@ -37,3 +45,9 @@ Once the pre-requisities have started, the heritrix crawler can be deployed. To 
 * `./dc3-deploy_aws_dc_crawler.sh aws_dc2024_crawler08-prod.env`
 
 Note that heritrix runs under a user account with ID 1001. This is because, within the heritrix container, heritrix runs under this account ID and requires to write a very small `dmesg` startup log into the `/h3-bin/` container directory. On the current deployment server, the 1001 account ID is used by the 'node_exporter' user, but the owner detail is not significant.
+
+After `dc3` is run, the heritrix ui should be viewable (after accepting the https security alert that may appear) at https://localhost:8443/. The user and password are defined in the `domain-crawler-config` repo so not to be recorded in this public repo.
+
+Note that the heritrix job name is still 'frequent'. This seems to be hard-coded into the heritrix build. As this shouldn't actually matter, it has been left as is. The generated warcs will be prefixed as defined in `dc3-docker-compose.yaml` so it will be clear where they came from.
+
+Finally, be aware that it can be very useful to observe heritrix running - this can be done via `docker -it exec <heritrix docker name> bash`.

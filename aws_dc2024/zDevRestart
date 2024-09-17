@@ -54,6 +54,11 @@ function create_topics {
 	./dc2-create_kafka_topics.sh aws_dc2024_crawler08-prod.env 
 }
 
+function start_crawler {
+	[[ ${DEBUG} ]] && echo 'start_crawler'
+	./dc3-deploy_aws_dc_crawler.sh aws_dc2024_crawler08-prod.env 
+}
+
 # script --------
 get_args $@
 [[ ${DEBUG} ]] || clear
@@ -67,4 +72,6 @@ if ! [[ ${ACTION} == 'stop' ]]; then
 	start_prereqs
 	sleep ${SLEEP}
 	create_topics
+	sleep ${SLEEP}
+	start_crawler
 fi

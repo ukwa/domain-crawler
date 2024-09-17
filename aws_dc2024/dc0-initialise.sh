@@ -1,9 +1,5 @@
 #!/bin/sh
 ENVFILE=$1
-CLAMUSER=clamav
-CLAMID=100
-HERITRIXUSER=heritrix
-HERITRIXID=1001
 DEBUG=
 
 
@@ -62,8 +58,8 @@ function create_user {
 
 function clamav_dir {
 	sudo chmod 755 ${CLAMAV_PATH}
-	sudo chown -R ${CLAMUSER} ${CLAMAV_PATH}
-	echo "Chmod'd/Chown'd ${CLAMUSER} ${CLAMAV_PATH}"
+	sudo chown -R ${CLAMAV_USER} ${CLAMAV_PATH}
+	echo "Chmod'd/Chown'd ${CLAMAV_USER} ${CLAMAV_PATH}"
 }
 
 function prometheus_configs {
@@ -87,6 +83,12 @@ function create_empty_surts {
 	done
 }
 
+function heritrix_dir {
+	sudo chmod 755 ${STORAGE_PATH}/heritrix/
+	sudo chown -R ${HERITRIX_USER_ID}:${HERITRIX_USER_ID} ${STORAGE_PATH}/heritrix/
+	echo "Chmod'd/Chown'd ${HERITRIX_USER} ${STORAGE_PATH}/heritrix/"
+}
+
 # script -------------------
 test_env_file
 test_storage_path
@@ -101,9 +103,10 @@ done
 echo -e "\n${STORAGE_PATH} tree structure"
 tree -d ${STORAGE_PATH} | less --no-init --quit-if-one-screen
 
-create_user ${CLAMUSER} ${CLAMID}
+create_user ${CLAMAV_USER} ${CLAMID}
 clamav_dir
 prometheus_configs
 create_empty_surts
-create_user ${HERITRIXUSER} ${HERITRIXID}
+create_user ${HERITRIX_USER} ${HERITRIX_USER_ID}
+heritrix_dir
 echo

@@ -48,6 +48,21 @@ Note that heritrix runs under a user account with ID 1001. This is because, with
 
 After `dc3` is run, the heritrix ui should be viewable (after accepting the https security alert that may appear) at https://localhost:8443/. The user and password are defined in the `domain-crawler-config` repo so not to be recorded in this public repo.
 
-Note that the heritrix job name is still 'frequent'. This seems to be hard-coded into the heritrix build. As this shouldn't actually matter, it has been left as is. The generated warcs will be prefixed as defined in `dc3-docker-compose.yaml` so it will be clear where they came from.
+Note that the heritrix job name is still 'frequent'. This seems to be hard-coded into the heritrix build. As this shouldn't actually matter, it has been left as is. The generated warcs will be prefixed as defined in `dc3-docker-compose.yaml` so it will be clear where they came from. Plus, be aware that it can be very useful to observe heritrix running - this can be done via `docker -it exec <heritrix docker name> bash`.
 
-Finally, be aware that it can be very useful to observe heritrix running - this can be done via `docker -it exec <heritrix docker name> bash`.
+
+## Starting heritrix
+
+It should now be possible to start the heritrix crawler. After logging into the heritrix ui,
+- As stated above, the available heritrix job is 'frequent'. Select this job
+- Select 'build' to instigate the creation of this crawler job
+- Select 'launch' this heritrix job
+- Select 'unpause' to actually start the crawler
+- It is a good idea to check the information on the job page at this stage. The crawl log should be viewable, though it should be empty at this point. The Configuration-referenced Paths should especially be checked, to see that they are all "expanded" (in the `crawler-beans.cxml` file, many values are injected from the `domain-crawler-config` repo .env file). If there are any unexpanded values (such as '${launch_id}', the deployment has not been configured correctly. Most, though not all, of the path links should work, though the corresponding pages should be empty.
+
+### Checks
+If all started as expected, there should be several useful sources to check:
+- Prometheus should show four containers up and reporting to it - http://localhost:9191/graph?g0.expr=up
+  - The key two are kafka and npld-dc-heritrix-workers (the other two are prometheus itself and the node_exporter of the host machine)
+- All target states should be Up - localhost:9191/targets
+- http://localhost:9191/graph?g0.expr=heritrix3_crawl_job_uris_total should show 10 'kinds' of heritrix worker jobs, with the jobname defined in the .env file 

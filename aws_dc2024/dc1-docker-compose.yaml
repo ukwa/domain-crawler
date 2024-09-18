@@ -68,6 +68,8 @@ services:
     volumes:
       - "${PROMETHEUS_CFG_PATH}:/etc/prometheus"
       - "${PROMETHEUS_DATA_PATH}:/prometheus"
+    extra_hosts:
+      - "hostserver:${CRAWL_HOST_LAN_IP}"
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'

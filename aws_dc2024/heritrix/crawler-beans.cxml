@@ -343,7 +343,7 @@
         <property name="connectTimeout" value="#{systemEnvironment['WEBRENDER_CONNECT_TIMEOUT_MS'] ?: 3600000 }" />
         <property name="readTimeout" value="#{systemEnvironment['WEBRENDER_READ_TIMEOUT_MS'] ?: 3600000 }" />
         <property name="maxTries" value="#{systemEnvironment['WEBRENDER_MAX_TRIES'] ?: 1 }" />
-		<property name="WrenderEndpoint" value="#{systemEnvironment['WEBRENDER_ENDPOINT'] ?: 'http://localhost:5000/wrender'}" />
+		<property name="WrenderEndpoint" value="#{systemEnvironment['WEBRENDER_ENDPOINT'] ?: 'http://webrender:5000/wrender'}" />
         <property name="warcFilePrefix" value="#{systemEnvironment['WEBRENDER_WARC_PREFIX'] ?: 'WEBRENDER'}"/>
         <property name="shouldProcessRule">
             <bean class="org.archive.modules.deciderules.DecideRuleSequence">
@@ -429,7 +429,7 @@
     <!-- a processor that scans content for viruses -->
     <bean id="viralContent" class="uk.bl.wap.crawler.postprocessor.ViralContentProcessor">
         <property name="enabled" value="#{systemEnvironment['CLAMD_ENABLED'] ?: false}"/>
-		<property name="clamdHost" value="#{systemEnvironment['CLAMD_HOST'] ?: localhost}" />
+		<property name="clamdHost" value="#{systemEnvironment['CLAMD_HOST'] ?: 127.0.0.1}" />
    		<property name="clamdPort" value="3310" />
    		<property name="clamdTimeout" value="60000" />
 		<property name="streamMaxLength" value="94371840"/>
@@ -625,7 +625,7 @@
     <property name="targetCeleryTask" value="crawl.tasks.uri_of_doc"/>
     <property name="routingKey" value="crawl.tasks.uri_of_doc"/>
     <property name="exchange" value="default"/>
-    <property name="amqpUri" value="amqp://guest:guest@#{systemEnvironment['AMQP_HOST'] ?: localhost}:5672/%2f" />
+    <property name="amqpUri" value="amqp://guest:guest@#{systemEnvironment['AMQP_HOST'] ?: 127.0.0.1}:5672/%2f" />
     <property name="extraFields">
         <map>
           <entry key="crawl_name" value="#{systemEnvironment['CRAWL_NAME'] ?: 'frequent'}"/>
@@ -761,7 +761,7 @@
      
     <!-- Shared OutbackCDX client and configuration -->
     <bean id="outbackCDXClient" class="uk.bl.wap.util.OutbackCDXClient">
-        <property name="endpoint" value="#{systemEnvironment['CDXSERVER_ENDPOINT'] ?: 'http://localhost:9090/fc'}"/>
+        <property name="endpoint" value="#{systemEnvironment['CDXSERVER_ENDPOINT'] ?: 'http://127.0.0.1:9090/dc'}"/>
         <property name="socketTimeout" value="30000"/>
         <property name="maxConnections" value="#{systemEnvironment['MAX_OUTBACKCDX_CONNECTIONS'] ?: 400}"/>
     </bean>

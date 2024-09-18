@@ -1,5 +1,6 @@
 #!/bin/env bash
 #### DEVELOPMENT USE ONLY ####
+ENVAR=
 SLEEP=3
 DEBUG=
 
@@ -8,10 +9,14 @@ function get_args {
 	while [[ ${#@} -gt 0 ]]; do
 		if [[ $1 == '--debug' || $1 == '-d' ]]; then DEBUG=$1
 		elif [[ $1 == 'stop' ]]; then ACTION=$1
+		else ENVAR=$1
 		fi
 		shift
 	done
 	[[ ${DEBUG} ]] && echo 'Debug On'
+	if ! [[ -f ${ENVAR} ]]; then echo "Environment file [${ENVAR}] missing" && exit 1
+	else source ${ENVAR}
+	fi
 }
 
 function stop_stacks {
@@ -22,6 +27,11 @@ function stop_stacks {
 		docker stack rm ${stack}
 	done
 	sleep ${SLEEP}
+	local _hc=$(docker ps | grep -oP "dc_crawler_npld-dc-heritrix-worker.*")
+	if [[ ${_hc} ]]; then
+		echo "Killing heritrix"
+	       	docker kill ${_hc}
+	fi
 	echo
 }
 
@@ -40,8 +50,14 @@ function wait_until_stopped {
 
 function remove_dirs {
 	[[ ${DEBUG} ]] && echo 'remove_dirs'
-	rm /mnt/data/dc/kafka/* /mnt/data/dc/prometheus/data/* -rf && wait
-	tree /mnt/data/dc/
+	sudo rm ${STORAGE_PATH}/kafka/* \
+		${STORAGE_PATH}/prometheus/data/* \
+		${STORAGE_PATH}/heritrx/home/.m2/* \
+		${STORAGE_PATH}/heritrix/output/* \
+		${STORAGE_PATH}/heritrix/state/* \
+		${STORAGE_PATH}/heritrix/log/* \
+		-rf && wait
+	tree ${STORAGE_PATH}/
 }
 
 function start_prereqs {

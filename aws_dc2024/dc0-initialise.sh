@@ -73,16 +73,6 @@ function prometheus_configs {
 	fi
 }
 
-function create_empty_surts {
-	local _sf
-	for _sf in ${SURTS_NPLD_PATH}/surts.txt ${SURTS_NPLD_PATH}/excluded-surts.txt; do
-		if ! [[ -f ${_sf} ]]; then
-			touch ${_sf}
-			echo "Created surt file ${_sf}"
-		fi
-	done
-}
-
 function heritrix_dir {
 	sudo chmod 755 ${STORAGE_PATH}/heritrix/
 	sudo chown -R ${HERITRIX_USER_ID}:${HERITRIX_USER_ID} ${STORAGE_PATH}/heritrix/
@@ -96,7 +86,7 @@ test_storage_path
 for _d in \
 	${TMP_STORAGE_PATH} ${KAFKA_PATH} ${CLAMAV_PATH} ${PROMETHEUS_CFG_PATH} ${PROMETHEUS_DATA_PATH} \
 	${CDX_STORAGE_PATH} ${HERITRIX_HOME_PATH} ${HERITRIX_OUTPUT_PATH} ${HERITRIX_STATE_PATH} ${HERITRIX_SCRATCH_PATH} \
-       	${HERITRIX_LOG_PATH} ${SURTS_NPLD_PATH} ${NPLD_STATE_PATH} ${WARCPROX_PATH} \
+       	${HERITRIX_LOG_PATH} ${HERITRIX_SURTS_PATH} ${NPLD_STATE_PATH} ${WARCPROX_PATH} \
 	; do make_directory ${_d}
 done
 
@@ -106,7 +96,6 @@ tree -d ${STORAGE_PATH} | less --no-init --quit-if-one-screen
 create_user ${CLAMAV_USER} ${CLAMID}
 clamav_dir
 prometheus_configs
-create_empty_surts
 create_user ${HERITRIX_USER} ${HERITRIX_USER_ID}
 heritrix_dir
 echo

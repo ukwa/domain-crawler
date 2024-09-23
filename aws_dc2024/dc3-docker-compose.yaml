@@ -47,7 +47,7 @@ services:
       - ${HERITRIX_STATE_PATH}:/heritrix/state
       - ${HERITRIX_SCRATCH_PATH}:/heritrix/scratch
       - ${HERITRIX_LOG_PATH}:/heritrix/log
-      - ${SURTS_NPLD_PATH}:/shared
+      - ${HERITRIX_SURTS_PATH}:/shared
       # Use a Bloom filter for the domain crawl
       - "./heritrix/uriuniqfilter-bloom.xml:/jobs/frequent/uriuniqfilter.xml"
       # Block some URLs that we shouldn't have done:

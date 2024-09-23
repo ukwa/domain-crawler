@@ -25,7 +25,7 @@ test_env_file
 
 # start DC crawler stack
 echo "Starting DC crawler services"
-docker stack deploy --compose-file=dc3-docker-compose.yaml --detach=true dc_crawler
+docker stack deploy --compose-file=dc3-docker-compose.yaml --detach=true dc_crawl
 
 echo -e "Pausing ${SLEEP} seconds whilst services initialise\n"
 wait

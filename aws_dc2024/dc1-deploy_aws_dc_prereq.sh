@@ -25,7 +25,7 @@ test_env_file
 
 # start DC kafka stack
 echo "Starting DC kafka services"
-docker stack deploy --compose-file=dc1-docker-compose.yaml --detach=true dc_prereq
+docker stack deploy --compose-file=dc1-docker-compose.yaml --detach=true dc_kafka
 
 echo -e "Pausing ${SLEEP} seconds whilst services initialise\n"
 wait

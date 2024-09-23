@@ -27,7 +27,7 @@ function stop_stacks {
 		docker stack rm ${stack}
 	done
 	sleep ${SLEEP}
-	local _hc=$(docker ps | grep -oP "dc_crawler_npld-dc-heritrix-worker.*")
+	local _hc=$(docker ps | grep -oP "dc_crawl_npld-dc-heritrix-worker.*")
 	if [[ ${_hc} ]]; then
 		echo "Killing heritrix"
 	       	docker kill ${_hc}

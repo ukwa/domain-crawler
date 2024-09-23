@@ -43,10 +43,12 @@ function check_repos_exist {
 
 function install_docker_compose {
 	# See https://docs.docker.com/compose/install/standalone/ for details, including up to date version
-	sudo curl -SL https://github.com/docker/compose/releases/download/v2.29.6/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
-	sudo chown ${USER}:${USER} /usr/local/bin/docker-compose
-	sudo chmod 750 /usr/local/bin/docker-compose
-	ls -l /usr/local/bin/docker-compose
+	if ! [[ -f /usr/local/bin/docker-compose ]]; then
+		sudo curl -SL https://github.com/docker/compose/releases/download/v2.29.6/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+		sudo chown ${USER}:${USER} /usr/local/bin/docker-compose
+		sudo chmod 750 /usr/local/bin/docker-compose
+		ls -l /usr/local/bin/docker-compose
+	fi
 }
 
 function make_directory {
@@ -97,6 +99,11 @@ function prometheus_configs {
 	fi
 }
 
+function add_empty_surts {
+	touch ${HERITRIX_SURTS_PATH}/surts.txt
+	touch ${HERITRIX_SURTS_PATH}/excluded-surts.txt
+}
+
 function heritrix_dir {
 	sudo chmod 755 ${STORAGE_PATH}/heritrix/
 	sudo chown -R ${HERITRIX_USER_ID}:${HERITRIX_USER_ID} ${STORAGE_PATH}/heritrix/
@@ -129,6 +136,8 @@ echo
 prometheus_configs
 echo
 create_user ${HERITRIX_USER} ${HERITRIX_USER_ID}
+echo
+add_empty_surts
 echo
 heritrix_dir
 echo -e "Completed -----------------------\n"

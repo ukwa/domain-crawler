@@ -111,4 +111,4 @@ networks:
     attachable: true
   kafka:
     external:
-      name: dc_prereq_default
+      name: dc_kafka_default

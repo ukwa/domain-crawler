@@ -32,4 +32,7 @@ wait
 sleep ${SLEEP}
 
 docker service ls
+echo
 ps -ef | grep -v grep | grep heritrix
+
+echo -e "Completed -----------------------\n"

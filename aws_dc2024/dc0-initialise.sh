@@ -25,6 +25,30 @@ function test_storage_path {
 	fi
 }
 
+function check_repos_exist {
+	if ! [[ -d ${DC_CONFIG_PATH}/ ]]; then
+		echo "ERROR: DC_CONFIG_PATH [${DC_CONFIG_PATH}] missing"
+		exit 1
+	else
+		echo "Config directory ${DC_CONFIG_PATH} exists"
+	fi
+
+	if ! [[ -d ${DC_SEEDS_PATH}/ ]]; then
+		echo "ERROR: DC_SEEDS_PATH [${DC_SEEDS_PATH}] missing"
+		exit 1
+	else
+		echo "Seeds directory ${DC_SEEDS_PATH} exists"
+	fi
+}
+
+function install_docker_compose {
+	# See https://docs.docker.com/compose/install/standalone/ for details, including up to date version
+	sudo curl -SL https://github.com/docker/compose/releases/download/v2.29.6/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+	sudo chown ${USER}:${USER} /usr/local/bin/docker-compose
+	sudo chmod 750 /usr/local/bin/docker-compose
+	ls -l /usr/local/bin/docker-compose
+}
+
 function make_directory {
 	local _d=$1
 	if [[ "${_d}" == "" ]]; then
@@ -93,9 +117,18 @@ done
 echo -e "\n${STORAGE_PATH} tree structure"
 tree -d ${STORAGE_PATH} | less --no-init --quit-if-one-screen
 
-create_user ${CLAMAV_USER} ${CLAMID}
-clamav_dir
-prometheus_configs
-create_user ${HERITRIX_USER} ${HERITRIX_USER_ID}
-heritrix_dir
 echo
+check_repos_exist
+echo
+install_docker_compose
+echo
+create_user ${CLAMAV_USER} ${CLAMID}
+echo
+clamav_dir
+echo
+prometheus_configs
+echo
+create_user ${HERITRIX_USER} ${HERITRIX_USER_ID}
+echo
+heritrix_dir
+echo -e "Completed -----------------------\n"

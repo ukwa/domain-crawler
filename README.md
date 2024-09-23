@@ -7,6 +7,9 @@
 This repo contains the code required to operate the UKWA domain crawler. Each year's code is intended to be collected here - the current and only year captured currently is 2024, in the `aws_dc2024/` directory. The instructions below are expected to be run within the year directory - all command lines below will need to be amended to match the actual, corresponding files.
 
 
+Prior to beginning the setup of the domain crawler, ensure that the `domain-crawler-config` repo is available. Our standard path for this is `~/github/domain-crawler-config/`. The information within this repo should be checked to ensure it is accurate and appropriate for this domain crawl.
+
+
 Before running the deploy script:
 - Copy a past .env file and edit the values for this server.
 - Ensure that the new .env file name includes this server's name so that it can be easily identified (e.g., `aws_dc2024_crawler08-prod.env`)
@@ -66,3 +69,32 @@ If all started as expected, there should be several useful sources to check:
   - The key two are kafka and npld-dc-heritrix-workers (the other two are prometheus itself and the node_exporter of the host machine)
 - All target states should be Up - localhost:9191/targets
 - http://localhost:9191/graph?g0.expr=heritrix3_crawl_job_uris_total should show 10 'kinds' of heritrix worker jobs, with the jobname defined in the .env file 
+
+
+## Add surts
+
+The two 'surts' files - `surts.txt` and `excluded-surts.txt` represent included and excluded domains to be crawled. The 'surts.txt' file is made up of the broad default values of:
+```
++uk
++scot
++wales
++cymru
++london
+```
+
+plus, seeds that have been identified to match UKWA crawl criteria but are outside of these defaults. This latter information was previously collected in W3ACT prior to the BL cyber-attack, and is now stored in the `domain-crawler-config` repo. The `excluded-surts.txt` is also in that repo and represents the seeds identified that should not be crawled. More details about surts and seeds can be found in the `dc-seeds` repo.
+
+** MORE DOCUMENTATION NEEDED HERE REGARDING THE GENERATION OF SURTS AND SEEDS **
+
+Once the surts files have been updated, they are added to the crawler by:
+* `./dc4-surts.sh aws_dc2024_crawler08-prod.env`
+
+
+## Submit a test seed
+
+
+## Submit domain crawl seeds
+
+Before submitting the DC seeds, it is a good idea to **pause the crawler**. This isn't absolutely necessary - seeds are regularly added whilst the frequent crawler is running - but it may help to not overload kafka or the crawler.
+
+The seeds for each domain crawl are stored in the repo `dc-seeds`. This should be cloned into the directory defined in the .env file, under DC_SEEDS_PATH.

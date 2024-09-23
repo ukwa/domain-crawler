@@ -96,6 +96,14 @@ services:
       - HERITRIX_OUT=/heritrix/log/heritrix_out.log
 
 
+  dc-seed-loader:
+    image: ukwa/crawl-streams:1.0.1
+    volumes:
+      - ".:/seeds"
+    networks:
+      - kafka
+
+
 networks:
   # Allow attachment of transient web-render containers, external monitoring:
   default:

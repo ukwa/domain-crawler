@@ -32,3 +32,4 @@ wait
 sleep ${SLEEP}
 
 docker service ls
+echo -e "Completed -----------------------\n"

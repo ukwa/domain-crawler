@@ -104,10 +104,18 @@ function add_empty_surts {
 	touch ${HERITRIX_SURTS_PATH}/excluded-surts.txt
 }
 
-function heritrix_dir {
+function dir_permissions {
 	sudo chmod 755 ${STORAGE_PATH}/heritrix/
 	sudo chown -R ${HERITRIX_USER_ID}:${HERITRIX_USER_ID} ${STORAGE_PATH}/heritrix/
 	echo "Chmod'd/Chown'd ${HERITRIX_USER} ${STORAGE_PATH}/heritrix/"
+
+	sudo chmod 755 ${CDX_STORAGE_PATH}/
+	sudo chown -R ${USER}:${USER} ${CDX_STORAGE_PATH}/
+	echo "Chmod'd/Chown'd ${USER} ${CDX_STORAGE_PATH}"
+
+	sudo chmod 755 ${KAFKA_PATH}/
+	sudo chown -R ${USER}:${USER} ${KAFKA_PATH}/
+	echo "Chmod'd/Chown'd ${USER} ${KAFKA_PATH}"
 }
 
 # script -------------------
@@ -139,5 +147,5 @@ create_user ${HERITRIX_USER} ${HERITRIX_USER_ID}
 echo
 add_empty_surts
 echo
-heritrix_dir
+dir_permissions
 echo -e "Completed -----------------------\n"

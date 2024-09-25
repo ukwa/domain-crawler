@@ -1,6 +1,6 @@
 #!/bin/sh
 ENVFILE=$1
-SLEEP=20
+SLEEP=30
 DEBUG=
 
 

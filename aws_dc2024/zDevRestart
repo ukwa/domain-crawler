@@ -51,10 +51,12 @@ function wait_until_stopped {
 function remove_dirs {
 	[[ ${DEBUG} ]] && echo 'remove_dirs'
 	sudo rm ${STORAGE_PATH}/kafka/* \
+		${STORAGE_PATH}/cdx/data/dc \
 		${STORAGE_PATH}/prometheus/data/* \
 		${STORAGE_PATH}/heritrx/home/.m2/* \
 		${STORAGE_PATH}/heritrix/output/* \
 		${STORAGE_PATH}/heritrix/state/* \
+		${STORAGE_PATH}/heritrix/scratch/* \
 		${STORAGE_PATH}/heritrix/log/* \
 		-rf && wait
 	tree ${STORAGE_PATH}/

@@ -35,4 +35,8 @@ docker service ls
 echo
 ps -ef | grep -v grep | grep heritrix
 
+# ensure at least empty surts files exist
+touch ${HERITRIX_SURTS_PATH}/surts.txt
+touch ${HERITRIX_SURTS_PATH}/excluded-surts.txt
+
 echo -e "Completed -----------------------\n"

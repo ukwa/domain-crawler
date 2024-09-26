@@ -7,7 +7,7 @@
 This repo contains the code required to operate the UKWA domain crawler. Each year's code is intended to be collected here - the current and only year recorded here currently is 2024, in the `aws_dc2024/` directory. The instructions below are expected to be followed within the year directory - all command lines below will need to be amended to match the actual, corresponding files. The code below are using the DC2024 values as examples.
 
 
-Prior to beginning the setup of the domain crawler, ensure that the `domain-crawler-config` repo is available. Our standard path for this is `~/github/domain-crawler-config/`. The information within this repo should be checked to ensure it is accurate and appropriate for this domain crawl.
+Prior to beginning the setup of the domain crawler, ensure that the `domain-crawler-config` repo is available. Our standard path for production is `~/github/domain-crawler-config/`, but can be specified for local and/or development. The information within this repo should be checked to ensure it is accurate and appropriate for this domain crawl.
 
 
 Before running the deploy script:
@@ -86,35 +86,57 @@ At this point, heritrix can be unpaused and it should crawl that seed, and only 
 
 **Remember** to pause and checkpoint heritrix before continuing.
 
-The local STORAGE_PATH/heritrix/output/... directory should now contain meaningful crawl.log.cp\* and warc.gz files that can be read to check the crawling ran as expected. (`zless` is best for viewing the warc.gz)
+The local STORAGE_PATH/heritrix/output/... directory should now contain meaningful crawl.log.cp\* and warc.gz files that can be read to check the crawling ran as expected. (`zless` is great for viewing the warc.gz .)
 
 
-## Add surts
+## In-scope and excluded surts
 
-Before running the crawler at scale, the 'in scope' surt and the 'excluded' surt files need to be added. The two 'surts' files - `surts.txt` and `excluded-surts.txt` represent included and excluded domains to be crawled. The 'surts.txt' file is made up of the broad default values of:
+Before running the crawler at scale, the 'in-scope' surts and the 'excluded' surts files need to be added. The two 'surts' files - `surts.txt` and `excluded-surts.txt` represent included and excluded domains to be crawled. The 'surts.txt' file is made up of the broad default values of:
 ```
-+uk
-+scot
-+wales
 +cymru
 +london
++scot
++wales
++uk
 ```
 
-Also, seeds that have been identified to match UKWA crawl criteria but are outside of these defaults are included. This latter information was previously collected in W3ACT prior to the BL cyber-attack, and is now stored in the `domain-crawler-config` repo. The `excluded-surts.txt` is also in that repo and represents the seeds identified that should not be crawled. More details about surts and seeds can be found in the `dc-seeds` repo.
+plus the seeds that have been identified to match UKWA crawl criteria but are outside of these defaults. This latter information was previously collected in W3ACT prior to the BL cyber-attack as the list of NPLD-scope domain-crawl-frequency-only seeds.
 
-** MORE DOCUMENTATION NEEDED HERE REGARDING THE GENERATION OF SURTS AND SEEDS **
+Given the filenames, it might understandly be assumed that both the in-scope and excluded surts files should be in 'surts' format (see https://heritrix.readthedocs.io/en/latest/glossary.html?highlight=surt#glossary for understanding), and sorted in alphabetical order. However, after making this assumption and converting the 2024 surts files, it was discovered that heritrix errored with this 'surt' format. It is now thought that heritrix will convert seed lists into surt format when necessary (as supported by the heritrix logs). **Consequently, the 'surts' files are not actually in surt format.**
 
-Once the surts files have been updated (if necessary), they are added to the crawler by:
-* `./dc4-surts.sh aws_dc2024_crawler08-prod.env`
+**Note that the names of these 'surt' files is important - they need to match what is defined for SURTS_SOURCE_FILE and SURTS_EXCLUDE_SOURCE_FILE in the .env file**
 
-To check this important step has been 'picked up' by heritrix, check again the heritrix UI `surtPrefixSeedScope` and `surtPrefixScopeExclusion` links; these should now show the content of the .txt files in the `domain-crawler-config` repo. (Heritrix frequently checks the content in the surts directory (defined in the .env file) for changes.)
+#### UKWA in-scope surts file
+
+For DC2024, the 'in-scope' surts file from the DC2022 AWS crawl has been used. Specifically, `dc-seeds$ cp dc-seeds-2022/surts-heritrix/excluded-surts.txt dc-seeds-2024/excluded-surts.txt`.
+
+#### UKWA excluded surts file
+
+The same approach has been taken for the 'excluded' surts file - specifically `cp dc-seeds-2022/surts-heritrix/surts.txt  dc-seeds-2024/surts.txt`.
+
+### Submit surts to heritrix
+
+Once the surts files have been created/updated as necessary, they are added to the crawler by:
+* `source aws_dc2024_crawler08-prod.env && cp ~/github/dc-seeds/dc-seeds-2024/surts.txt ${HERITRIX_SURTS_PATH}/`
+* `source aws_dc2024_crawler08-prod.env && cp ~/github/dc-seeds/dc-seeds-2024/excluded-surts.txt ${HERITRIX_SURTS_PATH}/`
+
+This copies these two 'surts' .txt files into the heritrix surts directory, as defined in the .env file.
+
+To check this important step has been 'picked up' by heritrix, check again the heritrix UI `surtPrefixSeedScope` and `surtPrefixScopeExclusion` links; these should now show the content of the surts files in the `dc-seeds/<year>` repo sub-directory. (Heritrix frequently checks the content in the surts directory inside the container (defined in the .env file) for changes.)
 
 
 ## Submit domain crawl seeds
 
 Before submitting the DC seeds, it is a good idea to make sure **the crawler is paused**. This isn't absolutely necessary - seeds are regularly added whilst the frequent crawler is running - but it may help to not overload kafka or the crawler.
 
-The seeds for each domain crawl are stored in the repo `dc-seeds`. This should be cloned into the directory defined in the .env file, under DC_SEEDS_PATH.
+**And, make sure the seeds file being submitted is in Unix format (not Windows).** To ensure this, convert via `dos2unix <winfile>`.
+
+The seeds list does not need to be in 'surt' format and does not need to be sorted in any way. To submit, run:
+* `./dc4-submit_seeds.sh <.env file> <seeds file>`
+
+This script submits each line in the seeds file to the kafka `dc.tocrawl` queue (which should still be paused, though it should not be an issue if this isn't so). This will take some time to complete - a test run of 86,000 URLs took .
+
+After this has completed, set up log tailing if desired and unpause the heritrix crawler. The kafka queues should show progress over time, as should the heritrix crawl.log.
 
 
 ## Pause and Shutdown processes

@@ -99,11 +99,6 @@ function prometheus_configs {
 	fi
 }
 
-function add_empty_surts {
-	touch ${HERITRIX_SURTS_PATH}/surts.txt
-	touch ${HERITRIX_SURTS_PATH}/excluded-surts.txt
-}
-
 function dir_permissions {
 	sudo chmod 755 ${STORAGE_PATH}/heritrix/
 	sudo chown -R ${HERITRIX_USER_ID}:${HERITRIX_USER_ID} ${STORAGE_PATH}/heritrix/
@@ -116,6 +111,12 @@ function dir_permissions {
 	sudo chmod 755 ${KAFKA_PATH}/
 	sudo chown -R ${USER}:${USER} ${KAFKA_PATH}/
 	echo "Chmod'd/Chown'd ${USER} ${KAFKA_PATH}"
+}
+
+function lost_found {
+	[[ -d ${CDX_STORAGE_PATH}/lost+found/ ]] && sudo chown -R root:root ${CDX_STORAGE_PATH}/lost+found
+	[[ -d ${HERITRIX_SCRATCH_PATH}/lost+found/ ]] && sudo chown -R root:root ${HERITRIX_SCRATCH_PATH}/lost+found
+	echo "Chown'd root .../lost+found"
 }
 
 # script -------------------
@@ -145,7 +146,7 @@ prometheus_configs
 echo
 create_user ${HERITRIX_USER} ${HERITRIX_USER_ID}
 echo
-add_empty_surts
-echo
 dir_permissions
+echo
+lost_found
 echo -e "Completed -----------------------\n"

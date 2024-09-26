@@ -97,7 +97,7 @@ services:
 
 
   dc-seed-loader:
-    image: ukwa/crawl-streams:1.0.1
+    image: ${CRAWL_STREAM_IMAGE}
     volumes:
       - ".:/seeds"
     networks:

@@ -4,6 +4,7 @@
 # globals
 ENVFILE=$1
 INFILE=$2
+LOGFILE=log.$(basename $0 .sh)
 DEBUG=
 
 # functions ----------------
@@ -22,13 +23,16 @@ function test_file_arg {
 test_file_arg ${ENVFILE}
 source ./${ENVFILE}
 test_file_arg ${INFILE}
+touch ${LOGFILE}
 
 c=0
 while read line; do
-#	docker run --network=dc_kafka_default ${CRAWL_STREAM_IMAGE} submit -k kafka-1:9092 -S dc.tocrawl ${line}
+	docker run --network=dc_kafka_default ${CRAWL_STREAM_IMAGE} submit -k kafka-1:9092 -S dc.tocrawl ${line}
 	c=$(( c + 1 ))
+	[[ ${c} =~ 000$ ]] && echo -e "$(date +'%Y-%m-%d %H.%M.%S')\t ${c} submitted" >> ${LOGFILE}
 
 done < <(cat ${INFILE})
 
-echo "Submitted ${c} lines from ${INFILE}"
-echo -e "Completed -----------------------\n"
+echo -e "$(date +'%Y-%m-%d %H.%M.%S')\t Submitted ${c} lines from ${INFILE}" >> ${LOGFILE}
+echo -e "Completed -----------------------\n" >> ${LOGFILE}
+exit 0

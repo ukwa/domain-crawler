@@ -125,20 +125,24 @@ This copies these two 'surts' .txt files into the heritrix surts directory, as d
 To check this important step has been 'picked up' by heritrix, check again the heritrix UI `surtPrefixSeedScope` and `surtPrefixScopeExclusion` links; these should now show the content of the surts files in the `dc-seeds/<year>` repo sub-directory. (Heritrix frequently checks the content in the surts directory inside the container (defined in the .env file) for changes.)
 
 
+## Prepare Nominet seeds
+
+The UK Web Archive have access to the Nominet ftp account, which provides a daily record of DNS domains etc. The tarball of data should be downloaded once, just before the beginning of the domain crawl. (I.e., it is not imperitive that the very latest data is used.) As of 2024, the tarball contains numerous lists of information, including a .csv dump of domains, in '<hostname>,<tld>' format (such as 'webarchive,org.uk' or 'bl,uk'. This list should be converted into seeds using the ` dc-seeds/common-scripts/nominet-generate-seeds.py` script. For example,
+* `python ~/github/dc-seeds/common_scripts/nominet-generate-seeds.py db-dump-20240925.csv > nominet.domains.seeds`
+
 ## Submit domain crawl seeds
 
 Before submitting the DC seeds, it is a good idea to make sure **the crawler is paused**. This isn't absolutely necessary - seeds are regularly added whilst the frequent crawler is running - but it may help to not overload kafka or the crawler.
 
 **And, make sure the seeds file being submitted is in Unix format (not Windows).** To ensure this, convert via `dos2unix <winfile>`.
 
-The seeds list does not need to be in 'surt' format and does not need to be sorted in any way. To submit, run:
-* `nohup ./dc4-submit_seeds.sh <.env file> <seeds file> &`
+Seed lists do not need to be in 'surt' format and do not need to be sorted in any way. To submit, run:
+* `./dc4-submit_seeds.sh <.env> <full path of seed list>`
 
-This script submits each line in the seeds file to the kafka `dc.tocrawl` queue (which should still be paused, though it should not be an issue if this isn't so). This will take some time to complete - a test run of 86,000 URLs took many hours and the full Nominet list will take days. For this reason, the `dc4` script writes out a progress log file in the current directory. There is no long term use for this log, but it useful to be aware of progress whilst `dc4` is running. If appropriate, multiple `dc4` seed submissions can run in parallel (though watch the server performance carefully). Once the submissions have completed, the log can be deleted.
+This script submits the seeds file to the kafka `dc.tocrawl` queue. This will take some time to complete - the full Nominet list of 10 million seeds will take an hour or more. 
 
-After a seed submission has started, set up log tailing if desired and unpause the heritrix crawler. The kafka queues should show progress over time, as should the heritrix crawl.log.
+After a seed submission has started, set up log tailing if desired. The kafka queues should show progress over time, and the seeds should be viewable in the latest 'dc.crawl' messages.
 
-*At present, the `aws_dc2024/dc4-docker-compose.yaml` is not used. But as it should be required for file submission of seeds, it is left included in the directory.*
 
 ## Pause and Shutdown processes
 

@@ -4,7 +4,6 @@
 # globals
 ENVFILE=$1
 INFILE=$2
-LOGFILE=log.$(basename $0 .sh)
 DEBUG=
 
 # functions ----------------
@@ -23,24 +22,19 @@ function test_file_arg {
 test_file_arg ${ENVFILE}
 source ./${ENVFILE}
 test_file_arg ${INFILE}
-echo "Submitting seeds into   kafka-1:9092 dc.tocrawl  from  ${INFILE}" >> ${LOGFILE}
 
-# initialise line/seed counter
-c=0
+# get directory of INFILE, check valid
+inDir=$(dirname ${INFILE})
+if ! [[ -d ${inDir}/ ]]; then
+	echo "ERROR: Directory [{$inDir}] of input file [${INFILE}] missing"
+	exit 1
+fi
 
-{	# try
-	while read line; do
-		docker run --network=dc_kafka_default ${CRAWL_STREAM_IMAGE} submit -k kafka-1:9092 -S dc.tocrawl ${line}
-		c=$(( c + 1 ))
-		[[ ${c} =~ 00$ ]] && echo -e "$(date +'%Y-%m-%d %H.%M.%S')\t ${c} submitted" >> ${LOGFILE}
-	done < <(cat ${INFILE})
+# get basename of INFILE
+bnFile=$(basename ${INFILE})
 
-	echo -e "$(date +'%Y-%m-%d %H.%M.%S')\t Submitted ${c} lines from ${INFILE}" >> ${LOGFILE}
-	echo -e "Completed -----------------------\n" >> ${LOGFILE}
-
-} || {	# catch
-	echo -e "$(date +'%Y-%m-%d %H.%M.%S')\t Submitted ${c} lines from ${INFILE}" >> ${LOGFILE}
-	echo -e "Stopping ------------------------\n" >> ${LOGFILE}
-}
+echo "Submitting seeds into  ${KAFKA_BOOTSTRAP_SERVERS} dc.tocrawl  from  ${INFILE}"
+# as the Nominet seeds list will take hours to submit, command is nohup'd
+nohup docker run it -v ${inDir}:/host --net=dc_kafka_default ${CRAWL_STREAM_IMAGE} submit -k ${KAFKA_BOOTSTRAP_SERVERS} -L now dc.tocrawl /host/${bnFile} &
 
 exit 0

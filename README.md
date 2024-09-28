@@ -102,7 +102,7 @@ Before running the crawler at scale, the 'in-scope' surts and the 'excluded' sur
 
 plus the seeds that have been identified to match UKWA crawl criteria but are outside of these defaults. This latter information was previously collected in W3ACT prior to the BL cyber-attack as the list of NPLD-scope domain-crawl-frequency-only seeds.
 
-Given the filenames, it might understandly be assumed that both the in-scope and excluded surts files should be in 'surts' format (see https://heritrix.readthedocs.io/en/latest/glossary.html?highlight=surt#glossary for understanding), and sorted in alphabetical order. However, after making this assumption and converting the 2024 surts files, it was discovered that heritrix errored with this 'surt' format. It is now thought that heritrix will convert seed lists into surt format when necessary (as supported by the heritrix logs). **Consequently, the 'surts' files are not actually in surt format.**
+Surt files should be in 'surt' format (see https://heritrix.readthedocs.io/en/latest/glossary.html?highlight=surt#glossary for understanding), and sorted in alphabetical order. If they are not already, there is a converter script in the `dc-seeds` repo.
 
 **Note that the names of these 'surt' files is important - they need to match what is defined for SURTS_SOURCE_FILE and SURTS_EXCLUDE_SOURCE_FILE in the .env file**
 
@@ -132,14 +132,35 @@ Before submitting the DC seeds, it is a good idea to make sure **the crawler is 
 **And, make sure the seeds file being submitted is in Unix format (not Windows).** To ensure this, convert via `dos2unix <winfile>`.
 
 The seeds list does not need to be in 'surt' format and does not need to be sorted in any way. To submit, run:
-* `./dc4-submit_seeds.sh <.env file> <seeds file>`
+* `nohup ./dc4-submit_seeds.sh <.env file> <seeds file> &`
 
-This script submits each line in the seeds file to the kafka `dc.tocrawl` queue (which should still be paused, though it should not be an issue if this isn't so). This will take some time to complete - a test run of 86,000 URLs took .
+This script submits each line in the seeds file to the kafka `dc.tocrawl` queue (which should still be paused, though it should not be an issue if this isn't so). This will take some time to complete - a test run of 86,000 URLs took many hours and the full Nominet list will take days. For this reason, the `dc4` script writes out a progress log file in the current directory. There is no long term use for this log, but it useful to be aware of progress whilst `dc4` is running. If appropriate, multiple `dc4` seed submissions can run in parallel (though watch the server performance carefully). Once the submissions have completed, the log can be deleted.
 
-After this has completed, set up log tailing if desired and unpause the heritrix crawler. The kafka queues should show progress over time, as should the heritrix crawl.log.
+After a seed submission has started, set up log tailing if desired and unpause the heritrix crawler. The kafka queues should show progress over time, as should the heritrix crawl.log.
 
+*At present, the `aws_dc2024/dc4-docker-compose.yaml` is not used. But as it should be required for file submission of seeds, it is left included in the directory.*
 
 ## Pause and Shutdown processes
 
-** INFORMATION NEEDED HERE - INCLUDING PAUSING, CHECKPOINTING, HERITRIX TERMINATE, AND DOCKER SERVICE OPERATIONS **
-** ALSO INFORMATION ABOUT ACTIONS TO TAKE BEFORE REBOOTING SERVER AND ON STARTUP **
+** IT IS ABSOLUTELY IMPERITIVE TO PAUSE AND CHECKPOINT THE CRAWLER BEFORE STOPPING FOR ANY REASON. **
+
+* To pause the crawler
+  - Use the UI and select 'Pause'. 
+    This is likely to take a long time if the server is busy with many threads - give it as long as it needs, even if it is hours. If progress seems to have stopped (i.e., the server is idle and the heritrix logs show no activity) **STILL WAIT**. 
+  - When the pause has completed, select 'checkpoint'. 
+    If no checkpoint is successfully recorded, the next run will have to be from the previous checkpoint, and all state information will be lost. (Logically, any subsequent warcs created will remain.)
+
+* To stop the crawler
+  - After the pause and checkpoint have been completed, select 'terminate' in the heritrix ui.
+  - Via the terminal, stop the crawler stack `docker stack rm <crawl stack name>`
+
+Always allow time for each action to complete. Observe the logs if necessary to be confident of the status.
+
+## Restarting crawling
+
+As the domain crawler is currently using `docker`, this service is disabled from starting automatically on server boot (so to allow for any necessary remedial actions). When the server is ready to start crawling again, start docker by
+* `sudo systemctl start docker`
+
+Depending on the previous server state, docker may take 20+ minutes to start. Once completed and the server settles to low load, repeat the start up steps above (**ensuring no 'z' development scripts are used, and the kakfa queues need not be created again**).
+
+As 'docker swarm' is currently used, once docker starts, the 'dc_kafka' services should already have started. (If not, use `dc1` as above to restart again.) Then start the crawler components using `dc3` as above.

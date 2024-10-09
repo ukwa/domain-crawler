@@ -36,7 +36,8 @@ echo
 ps -ef | grep -v grep | grep heritrix
 
 # ensure at least empty surts files exist
-touch ${HERITRIX_SURTS_PATH}/surts.txt
-touch ${HERITRIX_SURTS_PATH}/excluded-surts.txt
+sudo touch ${HERITRIX_SURTS_PATH}/surts.txt
+sudo touch ${HERITRIX_SURTS_PATH}/excluded-surts.txt
+sudo chown ${HERITRIX_USER_ID} ${HERITRIX_SURTS_PATH}/*
 
 echo -e "Completed -----------------------\n"

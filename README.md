@@ -102,7 +102,7 @@ Before running the crawler at scale, the 'in-scope' surts and the 'excluded' sur
 
 plus the seeds that have been identified to match UKWA crawl criteria but are outside of these defaults. This latter information was previously collected in W3ACT prior to the BL cyber-attack as the list of NPLD-scope domain-crawl-frequency-only seeds.
 
-Surt files should be in 'surt' format (see https://heritrix.readthedocs.io/en/latest/glossary.html?highlight=surt#glossary for understanding), and sorted in alphabetical order. If they are not already, there is a converter script in the `dc-seeds` repo.
+Surt files should be in 'surt' format (see https://heritrix.readthedocs.io/en/latest/glossary.html?highlight=surt#glossary for understanding), and sorted in alphabetical order. If they are not already, there is a converter script in the `dc-seeds` repo called `convert_to_surt_format.py`.
 
 **Note that the names of these 'surt' files is important - they need to match what is defined for SURTS_SOURCE_FILE and SURTS_EXCLUDE_SOURCE_FILE in the .env file**
 

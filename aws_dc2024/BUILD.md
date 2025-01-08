@@ -34,3 +34,21 @@ Filesystem                      Type      Size  Used Avail Use% Mounted on
 ```
 
 Note that several volumes have increased in size already, especially `/mnt/data/dc/heritrix/state` which is an LVM volume of three 5TiB 'disks' now.
+
+Finally, after the completion of the DC2024 run and heritrix in the process of shutting down (and all warcs moved to S3), the file system is:
+
+```
+Filesystem                      Type      Size  Used Avail Use% Mounted on
+efivarfs                        efivarfs  128K  7.7K  116K   7% /sys/firmware/efi/efivars
+/dev/nvme0n1p4                  xfs        63G  6.1G   57G  10% /
+/dev/nvme0n1p3                  xfs       960M  440M  521M  46% /boot
+/dev/nvme5n1p1                  ext4      755G  605M  716G   1% /mnt/data/dc/heritrix/scratch
+/dev/nvme6n1p1                  ext4     1007G  137G  819G  15% /mnt/data/dc/cdx/data
+/dev/nvme0n1p2                  vfat      200M  7.1M  193M   4% /boot/efi
+/dev/mapper/vg_tmp-lv_tmp       xfs       128G  946M  128G   1% /tmp
+/dev/mapper/vg_var-lv_var       xfs       256G   31G  226G  12% /var
+/dev/nvme4n1p1                  ext4      494G  6.5G  463G   2% /ukwa
+/dev/mapper/vg_state-lv_state   xfs        30T   27T  3.6T  89% /mnt/data/dc/heritrix/state
+/dev/mapper/vg_kafka-lv_kafka   xfs       4.0T   37G  4.0T   1% /mnt/data/dc/kafka
+/dev/mapper/vg_output-lv_output xfs        10T  380G  9.7T   4% /mnt/data/dc/heritrix/output
+```

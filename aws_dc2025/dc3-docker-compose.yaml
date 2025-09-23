@@ -1,0 +1,106 @@
+version: "3.2"
+
+services:
+  # CDX service for storing crawl status:
+  cdxserver:
+    image: ${CDX_IMAGE}
+    user: ${USER_ID}
+    # Command arguments
+    # -b bindaddr   CDX service bind IP address
+    # -d datadir    Directory for cdx data indexes
+    # -p port       CDX service port
+    # -t threads    Number of web server threads
+    # -u            UNKNOWN
+    command: "java -jar outbackcdx.jar -b 0.0.0.0 -d /cdx-data -p 8080 -t 5000 -u"
+    ulimits:
+      nofile:
+        soft: 102400
+        hard: 102400
+    ports:
+      - ${CDX_PORT}:8080
+    volumes:
+      - ${CDX_STORAGE_PATH}:/cdx-data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "8g"
+
+
+  npld-dc-heritrix-worker:
+    image: ${HERITRIX_IMAGE}
+    hostname: "npld-dc-heritrix3-worker-{{.Task.Slot}}"
+    user: ${HERITRIX_USER_ID}
+    ulimits:
+      nproc:
+        soft: 204800
+        hard: 204800
+      nofile:
+        soft: 204800
+        hard: 204800
+    ports:
+      - 8443:8443     # https
+      - 8484:8484     # jmx
+      - 9118:9118     # metrics
+    volumes:
+      - ${HERITRIX_HOME_PATH}:/home/heritrix
+      - ${HERITRIX_OUTPUT_PATH}:/heritrix/output
+      - ${HERITRIX_STATE_PATH}:/heritrix/state
+      - ${HERITRIX_SCRATCH_PATH}:/heritrix/scratch
+      - ${HERITRIX_LOG_PATH}:/heritrix/log
+      - ${HERITRIX_SURTS_PATH}:/shared
+      # Use a Bloom filter for the domain crawl
+      - "./heritrix/uriuniqfilter-bloom.xml:/jobs/frequent/uriuniqfilter.xml"
+      # Block some URLs that we shouldn't have done:
+      - "./jobs/dc/excludes.xml:/jobs/frequent/excludes.xml"
+    stop_grace_period: 10m     # Give the H3 instances some time to shut down neatly following SIGTERM
+    depends_on:
+      - clamd
+      - kafka
+      - cdxserver
+    networks:
+      - default
+      - kafka
+    dns:    # Use Google internet DNS
+      - 8.8.8.8
+      - 8.8.4.4
+    env_file:
+      - ${HERITRIX_ENV_FILE}
+    environment:
+      - CRAWL_NAME=dc2024
+      - LAUNCH_AUTOMATICALLY=false
+      - KAFKA_SEEK_TO_BEGINNING=false
+      - KAFKA_TOCRAWL_TOPIC=dc.tocrawl
+      - KAFKA_CANDIDATES_TOPIC=dc.tocrawl
+      - KAFKA_CRAWLED_TOPIC=dc.crawled
+      - KAFKA_INSCOPE_TOPIC=dc.inscope
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS}
+      - WARC_PREFIX=${WARC_PREFIX}
+      - CDXSERVER_ENDPOINT=${CDXSERVER_ENDPOINT}
+      - MAX_OUTBACKCDX_CONNECTIONS=600
+      - "SURTS_SOURCE_FILE=/shared/surts.txt"
+      - "SURTS_EXCLUDE_SOURCE_FILE=/shared/excluded-surts.txt"
+      - WEBRENDER_ENABLED=false
+      - JAVA_OPTS=-Xms${HERITRIX_RAM} -Xmx${HERITRIX_RAM} -XX:+UseG1GC -XX:MaxGCPauseMillis=1000 -XX:+UseCompressedOops -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=8484 -Dcom.sun.management.jmxremote.rmi.port=8484 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Djava.rmi.server.hostname=${CRAWL_HOST_LAN_IP}
+      - MAX_TOE_THREADS=600
+      - WARC_WRITER_POOL_SIZE=200
+      - "RETIRE_QUEUES=true"                            # Avoid logging all the over-quota URLs
+      - USER_AGENT_PREFIX=bl.uk_lddc_bot
+      - GEOIP_GB_ENABLED=false
+      - "URI_FORGETTING_ENABLED=false"                  # Domain crawl uriUniqFilter doesn't need to forget
+      - "PAUSE_AT_START=true"                           # Launch into PAUSED state
+      - "MAX_RETRIES=2"                                 # The default, 10, isn't suitable as DC has lots of unresponsive URLs
+      - "RECENTLY_SEEN_USE_LAUNCH_TIMESTAMP=false"      # Block the launchTimestamp recrawl mechanism
+      - "FRONTIER_JE_CLEANER_THREADS=4"                 # Use more cleaner threads
+      - "FRONTIER_JE_EVICTOR_CORE_THREADS=4"            # Up the evictor threads
+      - "FRONTIER_JE_EVICTOR_MAX_THREADS=16"            # Also allow more evictor when needed
+      - HERITRIX_OUT=/heritrix/log/heritrix_out.log
+
+
+networks:
+  # Allow attachment of transient web-render containers, external monitoring:
+  default:
+    driver: overlay
+    attachable: true
+  kafka:
+    external:
+      name: dc_kafka_default

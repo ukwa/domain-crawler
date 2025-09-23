@@ -1,0 +1,95 @@
+#!/bin/env bash
+#### DEVELOPMENT USE ONLY ####
+ENVAR=
+SLEEP=3
+DEBUG=
+
+# functions -----
+function get_args {
+	while [[ ${#@} -gt 0 ]]; do
+		if [[ $1 == '--debug' || $1 == '-d' ]]; then DEBUG=$1
+		elif [[ $1 == 'stop' ]]; then ACTION=$1
+		else ENVAR=$1
+		fi
+		shift
+	done
+	[[ ${DEBUG} ]] && echo 'Debug On'
+	if ! [[ -f ${ENVAR} ]]; then echo "Environment file [${ENVAR}] missing" && exit 1
+	else source ${ENVAR}
+	fi
+}
+
+function stop_stacks {
+	[[ ${DEBUG} ]] && echo 'stop_stacks'
+	for stack in $(docker stack ls | grep -oP "^\w+"); do
+		[[ ${stack} == 'NAME' ]] && continue
+		echo "Removing stack ${stack}"
+		docker stack rm ${stack}
+	done
+	sleep ${SLEEP}
+	local _hc=$(docker ps | grep -oP "dc_crawl_npld-dc-heritrix-worker.*")
+	if [[ ${_hc} ]]; then
+		echo "Killing heritrix"
+	       	docker kill ${_hc}
+	fi
+	echo
+}
+
+function wait_until_stopped {
+	[[ ${DEBUG} ]] && echo 'wait_until_stopped'
+	while true; do
+		docProc=$(docker ps | grep -v 'NAME')
+		[[ ${docProc} ]] || break
+		sleep ${SLEEP}
+		[[ ${DEBUG} ]] && echo -e "docker process running:\t ${docProc}"
+	done
+	sleep ${SLEEP}
+	docker ps -a
+	echo
+}
+
+function remove_dirs {
+	[[ ${DEBUG} ]] && echo 'remove_dirs'
+	sudo rm ${STORAGE_PATH}/kafka/* \
+		${STORAGE_PATH}/cdx/data/dc \
+		${STORAGE_PATH}/prometheus/data/* \
+		${STORAGE_PATH}/heritrx/home/.m2/* \
+		${STORAGE_PATH}/heritrix/output/* \
+		${STORAGE_PATH}/heritrix/state/* \
+		${STORAGE_PATH}/heritrix/scratch/* \
+		${STORAGE_PATH}/heritrix/log/* \
+		-rf && wait
+	tree ${STORAGE_PATH}/
+}
+
+function start_prereqs {
+	[[ ${DEBUG} ]] && echo 'start_prereqs'
+	./dc1-deploy_aws_dc_prereq.sh aws_dc2024_crawler08-prod.env 
+}
+
+function create_topics {
+	[[ ${DEBUG} ]] && echo 'create_topics'
+	./dc2-create_kafka_topics.sh aws_dc2024_crawler08-prod.env 
+}
+
+function start_crawler {
+	[[ ${DEBUG} ]] && echo 'start_crawler'
+	./dc3-deploy_aws_dc_crawler.sh aws_dc2024_crawler08-prod.env 
+}
+
+# script --------
+get_args $@
+[[ ${DEBUG} ]] || clear
+
+echo "Ensuring stacks removed"
+stop_stacks
+wait_until_stopped
+remove_dirs
+
+if ! [[ ${ACTION} == 'stop' ]]; then
+	start_prereqs
+	sleep ${SLEEP}
+	create_topics
+	sleep ${SLEEP}
+	start_crawler
+fi

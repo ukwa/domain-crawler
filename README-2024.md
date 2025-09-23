@@ -1,32 +1,13 @@
 # Domain Crawler
 
-This repo contains the code required to operate the UKWA domain crawler. Each year's code is intended to be collected here as evidence of how each DC was configured. Previous years' files should not be amended, and should be made read only. Previous years' README files should be read to be aware of historical details.
+####
+* IMPORTANT: Scripts starting with 'z' are for development purposes and must not be used on a production service as they destroy data.
+####
+
+This repo contains the code required to operate the UKWA domain crawler. Each year's code is intended to be collected here - the current and only year recorded here currently is 2024, in the `aws_dc2024/` directory. The instructions below are expected to be followed within the year directory - all command lines below will need to be amended to match the actual, corresponding files. The code below are using the DC2024 values as examples.
 
 
-## Pre-work
-- Ensure this repo and 'domain-crawler-config' are both up to date and syncing with github
-- Clone the previous year's configuration (e.g., aws-dc2024 -> aws-dc2025)
-- Copy README.md to README-dc<YYYY>.md, to retain historical record of preivous DCs
-- Update YYYY references in new year configuration (e.g., aws-dc2025) up to date
-- Ensure 
-
-
-## Step 1: Create initial DC server
-- Create an AWS EC2 instance of type m6a.8xlarge - 32 vCPUs, 128GB RAM, 12.5 gbps:
-  - Name: dcYYYY
-  - Amazon Machine Image: RHEL 9 (HVM), SSD volume type
-  - Create new key pair: ED25519 pem
-  - Create new security group:
-    - Allow ssh from local IP
-	- DON'T allow any traffic from internet
-	- Allow from AWS UKWA machines in fc security group (for monitoring)
-  - Storage: gp3 64GB / 
-
-
-
-
-
-
+Prior to beginning the setup of the domain crawler, ensure that the `domain-crawler-config` repo is available. Our standard path for production is `~/github/domain-crawler-config/`, but can be specified for local and/or development. The information within this repo should be checked to ensure it is accurate and appropriate for this domain crawl.
 
 
 Before running the deploy script:

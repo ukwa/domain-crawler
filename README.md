@@ -57,8 +57,6 @@ Details of previous year's volumes should be recorded in BUILD.md (for each year
 **Ensure availability zone of DC machine is known before creating volumes**
 
 Required volumes - all created in correct zone, encrypted (AWS default), associated with DC EC2, set up using LVM using labels for mountpoints
-- /tmp 100GiB xfs
-- /var 128GiB xfs
 - /mnt/data/dc/heritrix/scratch 512GiB ext4
 - /mnt/data/dc/cdx/data 512GiB ext4
 - /mnt/data/dc/heritrix/state 5120GiB xfs

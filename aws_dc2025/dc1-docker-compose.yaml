@@ -10,8 +10,10 @@ services:
     user: ${USER_ID}
     ulimits:
       nofile:
-        soft: 102400
-        hard: 204800
+        #soft: 102400     #### Upgraded by Gil for DC2025
+        #hard: 204800     #### Upgraded by Gil for DC2025
+        soft: 204800
+        hard: 409600
     ports:
       - ${KAFKA_PORT}:9094
       - 9092:9092

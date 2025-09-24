@@ -64,17 +64,17 @@ function remove_dirs {
 
 function start_prereqs {
 	[[ ${DEBUG} ]] && echo 'start_prereqs'
-	./dc1-deploy_aws_dc_prereq.sh aws_dc2024_crawler08-prod.env 
+	./dc1-deploy_aws_dc_prereq.sh aws_dc2025_crawler08-prod.env 
 }
 
 function create_topics {
 	[[ ${DEBUG} ]] && echo 'create_topics'
-	./dc2-create_kafka_topics.sh aws_dc2024_crawler08-prod.env 
+	./dc2-create_kafka_topics.sh aws_dc2025_crawler08-prod.env 
 }
 
 function start_crawler {
 	[[ ${DEBUG} ]] && echo 'start_crawler'
-	./dc3-deploy_aws_dc_crawler.sh aws_dc2024_crawler08-prod.env 
+	./dc3-deploy_aws_dc_crawler.sh aws_dc2025_crawler08-prod.env 
 }
 
 # script --------

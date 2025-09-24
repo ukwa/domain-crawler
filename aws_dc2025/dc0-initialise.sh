@@ -7,7 +7,7 @@ DEBUG=
 function test_env_file {
 	# read environment file
 	if [[ "${ENVFILE}" == "" ]]; then
-		echo "ERROR: You must give an argument that specifies the deployment, e.g. aws_dc2024_crawler08-prod.env"
+		echo "ERROR: You must give an argument that specifies the deployment, e.g. aws_dc2025_crawler08-prod.env"
 		exit 1
 	fi
 	if ! [[ -f ${ENVFILE} ]]; then
@@ -44,7 +44,7 @@ function check_repos_exist {
 function install_docker_compose {
 	# See https://docs.docker.com/compose/install/standalone/ for details, including up to date version
 	if ! [[ -f /usr/local/bin/docker-compose ]]; then
-		sudo curl -SL https://github.com/docker/compose/releases/download/v2.29.6/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+		sudo curl -SL https://github.com/docker/compose/releases/download/v2.39.4/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
 		sudo chown ${USER}:${USER} /usr/local/bin/docker-compose
 		sudo chmod 750 /usr/local/bin/docker-compose
 		ls -l /usr/local/bin/docker-compose
@@ -72,13 +72,21 @@ function create_user {
 	local user=$1
 	local uid=$2
 	# check no id for user exists
-	local _id=$(id ${uid} 2> /dev/null)
+	local _id=$(cat /etc/passwd | grep "x:${uid}:")
 	if [[ ${_id} ]]; then
 		echo -e "User with id ${uid} already created"
 		echo -e "ID:\t [${_id}]"
 	else
 		sudo useradd --no-create-home --system --shell /sbin/nologin --uid ${uid} ${user}
 		echo "User '${user}' id ${uid} created"
+	fi
+	# test that user now exists (either previously or now created)
+	#### Note that the test the user ID and not the user name. This is intentional as heritrix user will exist as
+	#### actually the node_exporter user name, which is fine. The key detail is the user ID, not the name.
+	_id=$(cat /etc/passwd | grep "x:${uid}:")
+	if ! [[ ${_id} ]]; then
+		echo "ERROR: Failed to create [{user}] with id [${uid}]"
+		exit 1
 	fi
 }
 
@@ -138,7 +146,7 @@ check_repos_exist
 echo
 install_docker_compose
 echo
-create_user ${CLAMAV_USER} ${CLAMID}
+create_user ${CLAMAV_USER} ${CLAMAV_USER_ID}
 echo
 clamav_dir
 echo

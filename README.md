@@ -158,17 +158,17 @@ Surt files should be in 'surt' format (see https://heritrix.readthedocs.io/en/la
 
 #### UKWA in-scope surts file
 
-For DC2024, the 'in-scope' surts file from the DC2022 AWS crawl has been used. Specifically, `dc-seeds$ cp dc-seeds-2022/surts-heritrix/excluded-surts.txt dc-seeds-2024/excluded-surts.txt`.
+For DC2025, the 'in-scope' surts file from the DC2024 AWS crawl has been used. Specifically, `dc-seeds$ cp dc-seeds-2024/excluded-surts.txt dc-seeds-2025/`.
 
 #### UKWA excluded surts file
 
-The same approach has been taken for the 'excluded' surts file - specifically `cp dc-seeds-2022/surts-heritrix/surts.txt  dc-seeds-2024/surts.txt`.
+The same approach has been taken for the 'excluded' surts file - specifically `cp dc-seeds-2024/surts.txt  dc-seeds-2025/`. **The 2024 version was then processed with the `convert_to_surt_format.py` script to correct the entry format.**
 
 #### Submit surts to heritrix
 
 Once the surts files have been created/updated as necessary, they are added to the crawler by:
-* `source aws_dc2025_crawler08-prod.env && cp ~/github/dc-seeds/dc-seeds-2024/surts.txt ${HERITRIX_SURTS_PATH}/`
-* `source aws_dc2025_crawler08-prod.env && cp ~/github/dc-seeds/dc-seeds-2024/excluded-surts.txt ${HERITRIX_SURTS_PATH}/`
+* `source aws_dc2025_crawler08-prod.env && cp ~/github/dc-seeds/dc-seeds-2025/surts.txt ${HERITRIX_SURTS_PATH}/`
+* `source aws_dc2025_crawler08-prod.env && cp ~/github/dc-seeds/dc-seeds-2025/excluded-surts.txt ${HERITRIX_SURTS_PATH}/`
 
 This copies these two 'surts' .txt files into the heritrix surts directory, as defined in the .env file.
 
@@ -186,14 +186,18 @@ Then,
 * `./01-requirements` adds python modules needed by the scripts
 * `./02-copy_fs` copies the script and modules
 * **Ensure that `~/keys/s3dc.config` is using this year's dcYYYY names in `crawlname` and `bucket`**.
+* Create required directories: ~/logs, ~/locks, and ~/github/aws24/dc_scripts/checksums/dcYYYY
+* Add a crontab entry to run `upload_to_s3.py` regularly - twice daily? (The script won't run if it's already running)
 
 The 'aws24' repo is also cloned so that it can capture the crawl data checksums.
 
 
 ## Step 8. Prepare Nominet seeds
 
-The UK Web Archive have access to the Nominet ftp account, which provides a daily record of DNS domains etc. The tarball of data should be downloaded once, just before the beginning of the domain crawl. (I.e., it is not imperitive that the very latest data is used.) As of 2024, the tarball contains numerous lists of information, including a .csv dump of domains, in '<hostname>,<tld>' format (such as 'webarchive,org.uk' or 'bl,uk'. This list should be converted into seeds using the ` dc-seeds/common-scripts/nominet-generate-seeds.py` script. For example,
-* `python ~/github/dc-seeds/common_scripts/nominet-generate-seeds.py db-dump-20240925.csv > nominet.domains.seeds`
+The UK Web Archive have access to an Nominet account, by which we're able to gain a daily record of DNS domains etc. The tarball of data should be downloaded once, just before the beginning of the domain crawl. (I.e., it is not imperitive that the very latest data is used.) As of 2024, the tarball contains numerous lists of information, including a .csv dump of domains, in '<hostname>,<tld>' format (such as 'webarchive,org.uk' or 'bl,uk').
+
+This 'db-dump-<datestamp>.csv' list should be converted into seeds using the ` dc-seeds/common-scripts/nominet-generate-seeds.py` script. For example,
+* `python ~/github/dc-seeds/common_scripts/nominet-generate-seeds.py db-dump-20250924.csv > nominet.domains.seeds`
 
 
 ### Submit domain crawl seeds
@@ -208,6 +212,9 @@ Seed lists do not need to be in 'surt' format and do not need to be sorted in an
 This script submits the seeds file to the kafka `dc.tocrawl` queue. This will take some time to complete - the full Nominet list of 10 million seeds will take an hour or more. 
 
 After a seed submission has started, set up log tailing if desired. The kafka queues should show progress over time, and the seeds should be viewable in the latest 'dc.crawl' messages.
+
+
+# ----------------------------------------------------------------------------------
 
 
 ## Pause and Shutdown actions

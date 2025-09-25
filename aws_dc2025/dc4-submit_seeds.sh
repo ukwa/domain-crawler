@@ -35,6 +35,6 @@ bnFile=$(basename ${INFILE})
 
 echo "Submitting seeds into  ${KAFKA_BOOTSTRAP_SERVERS} dc.tocrawl  from  ${INFILE}"
 # as the Nominet seeds list will take hours to submit, command is nohup'd
-nohup docker run it -v ${inDir}:/host --net=dc_kafka_default ${CRAWL_STREAM_IMAGE} submit -k ${KAFKA_BOOTSTRAP_SERVERS} -L now dc.tocrawl /host/${bnFile} &
+nohup docker run -v ${inDir}:/host --net=dc_kafka_default ${CRAWL_STREAM_IMAGE} submit -k ${KAFKA_BOOTSTRAP_SERVERS} -L now dc.tocrawl /host/${bnFile} &
 
 exit 0

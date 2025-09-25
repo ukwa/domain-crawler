@@ -4,6 +4,8 @@ This repo contains the code required to create and operate the UKWA domain crawl
 
 All references to files are to the current year unless otherwise stated.
 
+As this setup is expected to run on AWS and use an S3 bucket, ensure this year's bucket exists with the migration to Glacier lifecycle rule.
+
 
 ## Step 1: Create initial DC server
 
@@ -23,9 +25,9 @@ All references to files are to the current year unless otherwise stated.
 Log into the new EC2 DC machine, then:
 - Run `sudo dnf update` and reboot
 - Configure elastic IP "crawler08.bl.uk" to be associated with this machine
-- Install 'git' 
+- Install 'git' - **remember ~/.gitconfig for username**
 - Clone https://github.com/ukwa/ukwacommon-libs.git and run steps (log out and back in again to pick up details)
-- Clone https://github.com/ukwa/aws24.git and run 'build' and 'crawl' (create 'node_exporter' user and chmod 700 /home/node_exporter/ beforehand)
+- Clone https://github.com/ukwa/aws24.git and run 'build' and 'crawl' (create 'node_exporter' user, included in users group, and chmod 700 /home/node_exporter/ beforehand)
 - Set machine hostname to dcYYYY
 - Clone https://github.com/ukwa/node_exporter-install.git and run steps
 
@@ -175,6 +177,17 @@ To check this important step has been 'picked up' by heritrix, check again the h
 
 ## Step 7. Install and configure 'move2s3' script
 
+As this domain crawler is running on AWS, the `move2s3` script needs to be added to move the crawl data off the local EC2 volume and onto S3 storage. To do this, it is easiest to switch to the 'node_exporter' user (as that user name is expected to have the 'heritrix' user id - see notes above).
+
+Then,
+* `cd ~/github/`
+* `git clone https://github.com/ukwa/aws24.git`
+* `cd ~/github/aws24/crawl/dc_scripts/`
+* `./01-requirements` adds python modules needed by the scripts
+* `./02-copy_fs` copies the script and modules
+* **Ensure that `~/keys/s3dc.config` is using this year's dcYYYY names in `crawlname` and `bucket`**.
+
+The 'aws24' repo is also cloned so that it can capture the crawl data checksums.
 
 
 ## Step 8. Prepare Nominet seeds
@@ -221,10 +234,12 @@ As the domain crawler is currently using `docker`, this service is disabled from
 
 Depending on the previous server state, docker may take 20+ minutes to start. Once completed and the server settles to low load, repeat the start up steps above (**ensuring no 'z' development scripts are used, and the kakfa queues need not be created again**).
 
-As 'docker swarm' is currently used, once docker starts, the 'dc_kafka' services should already have started. If not, repeat all the `dc*` scripts **skipping dc2 as the kafka topics need not be created again**:
+As 'docker swarm' is currently used, once docker starts, the 'dc_kafka' services should already have started. If not, rerun the dc1 and dc3 scripts that create the docker services:
 * cd ~/github/domain-crawler/aws-YYYY
-* `./dc0-initialise.sh aws_dc2025_crawler08-prod.env`
 * `./dc1-deploy_aws_dc_prereq.sh aws_dc2025_crawler08-prod.env`
+
+Watch `top` or `atop` to observe the machine activity - loading kafka queues or the startup of heritrix can take a lot of time when there's a great deal of previous data to load in.
+
 * `./dc3-deploy_aws_dc_crawler.sh aws_dc2025_crawler08-prod.env`
 
-Then, log into the heritrix UI, build and launch the last checkpoint - unpause if ready to continue crawling.
+Then, log into the heritrix UI, build and launch the last checkpoint. Now check the status of docker containers via http://localhost9191/query?g0.expr=up (especially as heritrix takes 'a bit longer' to report) and check the kafka queues(topics) have loaded their progress, http://localhost:9000/ui/clusters/dc-cluster/all-topics. Unpause heritrix only when ready to continue crawling.
